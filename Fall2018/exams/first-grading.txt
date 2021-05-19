@@ -1,0 +1,180 @@
+﻿Grading info marked with ***** blah blah *****
+
+
+*****Every IA should grade their own team members.  Grade exam part as 0 until the student has submitted the ungraded feedback part (see assignment on canvas)*****
+
+
+"For the following questions, assume your team decides to add a data collection facility to your team project.  Emphasis: Do not really change your team project in any way and do not discuss with your teammates!  Maximum 100 points."
+
+
+*****Tell me asap if you know the following applies to any of your teams.*****
+
+
+"Important note: If your team project actually has such a facility, or your team considered including such a facility, you have presumably already discussed with your team.  In this case, please bring to my attention and I'll give all the members of your team a different "addon" for your project - and grant extra time for the assessment corresponding to how long it takes me to provide the different addon."
+
+
+*****Grade all members of the same team around the same time when your memory is fresh, and look for too much similarity.  Point me at any suspicious cases.*****  
+
+
+"Your data collection facility will operate in the background as part of your team's software product, recording how the software product is actually used and operates - particularly any erroneous or unexpected workflows (ordering or timing of activities).  Analysis of the collected data will help your team improve your product.  For the purposes of this assignment consider only the data collection, not analysis."
+
+
+*****Questions 1, 4 and 9 are intended to be doable without reading the textbook. They total 60 points.  The other questions, total 40 points, are based on concepts from the textbook, some of which I mentioned in class and some of which I didn't, some are more obscure than others.  I realize you, the IAs, probably don't know all of them yourselves.  We're going to be pretty lenient with grading those questions, although of course a blank answer gets 0.*****   
+
+
+"1. Write a set of user stories, each with some special-case conditions of satisfaction, for the data collection facility. The user stories should be specific to your team project.  It is ok to omit the "As a <user role>" part.  20 points."
+
+
+*****begin grading #1
+
+
+As noted, ignore whether or not the user stories include a user role.  There should be at least three distinct user stories, which is implied by later questions saying choose three of your user stories and do this...  
+
+
+5 points for including at least one non-trivial special-case condition of satisfaction for any one of the user stories (not necessarily for each).  Examples of trivial and/or common case conditions of satisfaction are the timestamp of every command or action is recorded, all data input by end-user is recorded.  While that should indeed be recorded, data collection also needs to make sure to record unusual situations or apparent confusion. For example, a given user triggers numerous error messages, or the user makes frequent use of a "help" command (if the software has one), that might indicate a difficult-to-use interface, so the data collection should record the error messages and help requests along with the commands/actions/inputs from the user before and after.  Non-trivial special-case conditions may be hard to come up with for some projects, bring to my attention if a student says something like this is not applicable because.... and/or you cannot think of any special cases either.
+
+
+5 points for each of three user stories, choose the three "best" if more than three, so up to 15 points.  Each user story should have at least one condition of satisfaction, even if its trivial or common case, that makes sense for that user story, 2 points out of the 5.  Each user story should include some operation or activity specific to the student's team project, rather than generic, 3 points out of the 5. The examples above, timestamp of every command or action is recorded, all data input by end-user is recorded, are generic since worded this way they could apply to pretty much anything.  
+
+
+end grading #1*****  
+
+
+"2. Do you anticipate any challenges in testing the data collection facility arising from observability and/or controllability?  Why/why not?  4 points."
+
+
+*****begin grading #2
+
+
+It doesn't matter whether the student anticipates challenges or not with adding data collection to their own projects.  He/she just needs to demonstrate understanding of what observability and controllability mean - each 2 points.  
+
+
+Testing needs to be able to control what the software is doing by providing specific inputs as test cases.  This might be hard to do, e.g., if normally all the inputs come from sensors.  Testing also needs to be able to observe what the software is doing by accessing and checking the actual results of test cases. A software product with no direct human-visible outputs or results for some actions may be hard to observe, e.g., software that controls energy efficiency. 
+
+
+Very oddly, the textbook repeatedly refers to web software as difficult to control and observe; I think the authors must mean something different than I think of as web software. But since the textbooks says this, we have to allow for students to imagine that web applications or anything analogous to web applications (which probably includes most of the team projects) is difficult to observe/control. 
+
+
+end grading #2*****
+
+
+"3. Using the distinctions drawn in the textbook between fault, error and failure, describe at least one fault, at least one error, and at least one failure that might occur in the implementation of your user stories for the data collection facility. Do not discuss faults, etc. that might occur in the implementation of the main functionality of your team project.  6 points."
+
+
+*****begin grading #3
+
+
+Again, it doesn't matter what specific problems the students say might occur in the hypothetical new data collection part of their own projects.  They just need to demonstrate that they understand the distinctions between fault, error and failure - each 2 points.  I typically use the word "bug" to refer to all of these, but the textbook is more precise.  
+
+
+Fault means the actual defect in the code, the underlying mistake in the static text of the source code.  If this part of the code never runs, then error and failure due to that fault cannot occur.  
+
+
+Error means an incorrect internal program state during program execution.   When the defective part of the code does actually run, the specific data at that point during execution might or might not actually cause an error, i.e., an incorrect internal state.  For instance, if the bug is only triggered by negative values, and the defective part of the code has so far only been reached with positive values, then the error state won't occur.  
+
+
+Failure is the external manifestation of an error caused by a fault.   If the error, or incorrect internal state, does happen during program execution, it is not necessarily visible externally. Maybe that part of the internal state isn't used to produce the code's outputs or other externally visible behaviors.   But if it is visible externally, then those incorrect externally visible results constitute the failure.    
+
+
+end grading #3*****
+
+
+"4. Pick at least three of your user stories from part 1, and for each describe at least two equivalence classes (and their boundary conditions, if applicable) for testing the implementation of that user story.  Keep in mind that test inputs could include any data provided to or retrieved by the data collection facility, not just explicit parameters.  24 points."
+
+
+*****begin grading #4
+
+
+Pick the "best" three user stories, up to 8 points each.  Up to 4 points for each of the two equivalence classes, which might or might not have boundaries, that make sense given what you know about the student's team project.  Ranges have boundaries (min, min-1, min+1, max, max-1, max+1), but sets do not.  
+
+
+As noted in the question, the "inputs" can mean any application data read or accessed and then recorded or otherwise processed by the data collection facility. To invent multiple equivalence partitions, i.e., classes of inputs that from a blackbox perspective could be expected to be treated differently, it might be necessary to consider how the data collection facility, or parts of the facility, could be unit-tested outside execution within the full application.
+
+
+end grading #4*****
+
+
+"5. Describe any feasibility concerns that could arise in testing the data collection facility, including but not limited to the equivalence partitioning/boundary analysis criteria described in part 4. 4 points."
+
+
+*****begin grading #5
+
+
+Again, grading should not concern the details of the student's team project, but instead whether or not the student understands how feasibility relates to testing code in isolation vs. as part of a larger system.  An argument could be made that since the data collection facility is invoked by the code within the software product, not by the end-user, it could never receive invalid data and thus it is infeasible to test with invalid data.  If the user inputs invalid data to the product, and that is recorded in the background, it is actually valid data from the perspective of data collection. 
+
+
+Nevertheless, proper testing mandates that data collection, like all other software components, should be unit-tested, not just integration-tested or system-tested. This may include test cases with inputs that could never occur from inside the software product.  If the student says anything that implies he/she understands this issue, give the full 4 points. Use judgment for awarding partial credit, but try to be consistent.
+
+
+end grading #5*****
+
+
+"6. Given the equivalence classes and/or boundary conditions from part 4, describe a plausible construction (after your data collection facility has been implemented) of at least one complete test case including test case values, prefix values, postfix values, verification values, exit values, and expected results. 12 points."
+
+
+*****begin grading #6
+
+
+Again, don't be concerned with any discussion specific to the student's team project.  Grade instead based on whether the student demonstrates understanding of the terminology from the textbook, most of which maps directly to common practice (which the student ought to know!), only the notion of postfix values is obscure.  2 points each for the 6 concepts: test case values, prefix values, postfix values, verification values, exit values, and expected results.  
+
+
+Test case values are just test case inputs.  Prefix values are any data needed for setup prior to actually running the test, to bring the application into a proper state for running that test.  Verification values are any data needed in assertions or any other code that checks the results of running the test. Exit values are any additional data needed for teardown after executing the test, to return the application to a state suitable for running further tests. Expected results are, doh, expected results, what the test case should have produced for the given input if behaving correctly.  Postfix values are the union of all the verification and exit values.
+
+
+end grading #6*****
+
+
+"7. Characterize the full set of test cases implied by part 4, not just the one constructed in part 6, according to Beizer's "test process maturity levels", and explain why they would best fit that level.  If different test cases reflect different levels, explain how/why. 4 points."
+
+
+*****begin grading #7
+
+
+This question is rather obnoxious, just a textbook-reading check. I'd never heard of Beizer's test process maturity levels prior to reading the textbook, although I am familiar with the more general notion of process maturity (it concerns whether or not you keep metrics and review how well your software development process is working, revising as necessary). In any case, it doesn't matter which level(s) the students choose, instead grade on whether they seem to have looked up at least one of these levels - full 4 points.
+
+
+(I copied this from the textbook authors' slides.)
+Level 0 : There's no difference between testing and debugging
+Level 1 : The purpose of testing is to show correctness
+Level 2 : The purpose of testing is to show that the software doesn’t work
+Level 3 : The purpose of testing is not to prove anything specific, but to reduce the risk of using the software
+Level 4 : Testing is a mental discipline that helps all IT professionals develop higher quality software
+
+
+end grading #7*****
+
+
+"8. Explain how the test suite for your data collection facility will fulfill the RIPR model.  If you anticipate that any of your test cases will not completely fulfill the RIPR model, describe how/why not.  8 points."
+
+
+*****begin grading #8
+
+
+RIPR = reaches, infects, propagates, reveals. In the textbook terminology of question #3, the test case reaches the fault, the program's internal state is infected to become an error, that internal state propagates through further parts of the execution to actually affect the externally visible outputs, so the failure can be revealed. Do not be concerned with how the student relates these concepts to his/her specific test cases or team project, but instead whether the student seems to understand the model.  2 points for each of reaches, infects, propagates, reveals.  Propagates is likely to be the tricky/missing concept.
+
+
+end grading #8*****
+
+
+"9. Describe how continuous integration works.  Then give at least three distinct examples of specific warnings or alerts a static analysis bug finder might give that indicate code smells or likely bugs, not coding style issues, and explain what they mean and why these are considered problems.  It is ok to copy the examples from running a bug finder tool on existing code, but you also need to explain them. 16 points."
+
+
+*****begin grading #9
+
+
+This question checks whether the student understands continuous integration. A reasonable answer can actually be paraphrased from the first iteration team assignment - 4 points of the 16. Then 4 points each, up to 12 of the 16, for the explanations of three different examples of bug finder/code smell messages.  If the student gives more than three, consider only the "best" three.  Do not give credit for coding style messages. Do not give credit for duplicate messages, even if worded differently, that refer to the same kind of problem.  It is ok if the specific messages are copied from one of the student's bug finder pair assignments, in which case multiple members of the same team might have the same examples, but each student needs to write his/her own explanations. 
+
+
+end grading #9*****
+
+
+"10. Explain why applying modeling and analysis to your user stories, before implementation, should reduce the need for testing the implementation.  However, if up-front modeling and analysis might not reduce the need for testing your data collection facility, explain why not.  2 points."
+
+
+*****begin grading #10
+
+
+This is a trick question, essentially stating that waterfall-style modeling and analysis phases are better than agile iterations.  The student is supposed to argue that no, full testing is still needed, independent of any details of the student's project - 2 points. Edit: I've changed my mind on question #10.  If the students said anything that didn't sound like gibberish, give them the 2 points.
+
+
+end grading #10*****

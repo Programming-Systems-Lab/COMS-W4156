@@ -1,0 +1,148 @@
+﻿Grading info marked with ***** blah blah *****
+
+
+*****Every IA should grade their own team members.  Grade entire exam as 0 unless the student has already submitted the ungraded feedback part for their team members, ignore whether or not they provide course feedback.  There won’t be extra time for students to submit this part late after seeing their grades. *****
+
+
+“For the following questions, assume your startup (consisting solely of your team) is in discussions with a major software company, FANG, Inc., to “acquire” your product.  You’ll be rich!  However, FANG requires some additional work on your product before the acquisition. In particular, FANG insists on a carefully and completely documented design that can be easily understood by their engineers.  Of course, in a real acquisition, the design would be documented by your team working together.  But since this is an exam, you must not discuss with your teammates or anyone else other than the instructor and the IAs.  Maximum 100 points.”
+
+
+*****Grade all members of the same team around the same time when your memory is fresh, and look for too much similarity (except for #0, as explained below).  Point me at any suspicious cases.***** 
+
+
+“0. List the user stories for your product.  Its ok to omit conditions of satisfaction. Only include those user stories that are fully implemented, have been rigorously tested, and are really usable - FANG is not interested in purchasing vaporware.  This part is just setup for the remaining questions, no credit, but if it is missing or inaccurate you will receive zero (0) on the entire exam.  (If your team’s user stories may change before the final demo and/or final report, give the date and time at which this part was written.)”
+
+
+*****begin grading #0 
+
+
+No points specifically for this question, but if it’s missing give 0 for the entire exam. If it’s present, but doesn’t look right to you, ask me to look at it.  Its ok if this part is copied from a team assignment, so multiple team members may submit the same thing (actually, it would be odd if they didn’t submit pretty close to the same set of user stories; that’s one example of “doesn’t look right”).
+
+
+End grading #0*****
+
+
+*****None of the following questions should actually require reading the textbook.  For any question with no answer, give 0.*****
+
+
+1. Describe the standard architecture or architectures (may combine more than one) used by your product and why you chose it/them; this does not need to be among the architectures discussed in class.  If your team seriously considered any other widely-known architecture(s), but decided against, explain why.  If you did not use any standard architecture, explain what you did instead and why.  15 points.
+
+
+*****begin grading #1
+
+
+Give 10 points to any choice of standard architectures that seems likely to be what was actually used for at least part of the project.  I do not expect the IAs to reverse engineer the systems, so it might help to compare the answers to this question across the team members.  
+
+
+The other 5 points should be for whether the “why chosen” discussion seems plausible. 0 for this part if omitted or meaningless, e.g., we chose the spoon-and-fork architecture because it seemed like a good idea.
+
+
+If the choice of architectures or its explanation does not make sense, or if partial credit may be warranted (e.g., the decided-against architectures discussion makes sense even though the ultimate choice does not), ask me to look at it.  It is almost always, but not literally always, a bad idea to invent your own architecture; if this comes up, ask me to look at it.  If you’ve never heard of some architecture that is mentioned, ask me to look at it.
+
+
+end grading #1***** 
+  
+2. Pick at least three application-specific user stories (registration, login, logout, help, and other generic features are not application-specific).  Write a set of CRC cards that collectively cover those user stories.  Note that three user stories will not necessarily correspond to exactly three CRC cards.  15 points.
+
+
+*****begin grading #2
+
+Ignore the actor or “as a user I want this” part of the user story; otherwise, there should be some class for every noun (physical or virtual entity) and some responsibility for every verb (activity or behavior). For example, in “x does y”, x is the noun and some more grammatical form of does-y is the verb.  Anything done by “the system”, should correspond to a responsibility of some class.  A collaborator is some other noun/class that the class knows about, communicates with, operates on, etc., e.g., “x does y to z”, where z should be listed as a collaborator of x.  Another instance of the same class might be a collaborator, e.g., a tree node may have other tree nodes as children, so these children are collaborators of the parent.  
+
+
+5 points each for covering three user stories. For a given user story, 2 points if all nouns are covered with their own CRC card where that noun is the class.  2 points for all verbs covered by a responsibility on at least one CRC card.  1 point for all apparent collaborators from the user story listed on some CRC card(s) as collaborator and also have their own CRC class.  Note that a single user story may map to multiple CRC cards, and a single CRC card may map to multiple user stories.  If the CRC cards do not make sense, or if partial credit may be warranted, ask me to look at it.  What I have in mind is if some but not all nouns become classes and/or some but not all verbs become responsibilities, or if responsibilities or collaborators mappings are obviously wrong, we’ll come up with proportional partial credit.
+
+
+I told students to generate the CRC cards (and hence the class diagrams and so on) from these user stories, not from their code, because their actual code will not necessarily match the nouns/verbs of their user stories.  But if they were really documenting for an acquisition company, the CRC cards (and class diagrams, test cases, etc. below) should match the actual code - even if its bad design.
+
+end grading #2***** 
+
+
+3. Present the internal details of each class, from your CRC cards, as a UML class diagram (you do not need to include getters, setters, constructors, finalizers, etc.).  Omit relationships among classes in your answer to question #3. Explain each diagram in prose intended to be understandable to a software engineer who will need to maintain your code.  10 points.
+
+
+*****begin grading #3
+
+Do not be concerned with whether the students use proper UML syntax.
+
+
+Each class mentioned on any CRC card should have a corresponding class diagram.  This diagram should have a name, an optional set of attributes (ignore these in grading), and a set of operations.   
+
+
+Of the 10 total points, 5 points if all classes from the CRC cards have a corresponding class diagram.  5 points if all responsibilities from the CRC cards appear as one or more operations in the corresponding class diagrams. Do not grade the explanations.  If partial credit may be warranted, ask me to look at it; e.g., if some but not all classes have class diagrams and some but not all responsibilities become operations, or if mappings don’t make sense, we’ll come up with proportional partial credit.  
+
+end grading #3***** 
+
+
+4. Present relationships among classes, from your CRC cards, as UML class diagrams.  Each relationship must be labeled.  Omit the internal details of each class in your answer to question #4.  Explain each diagram in prose intended to be understandable to a software engineer who will need to maintain your code.  10 points.
+
+
+*****begin grading #4
+
+Do not be concerned with whether the students use proper UML syntax.
+
+
+Each collaborator mentioned on a CRC card should have a corresponding class diagram that shows its relationship with the main class from that CRC card.  Multiple collaborations among an arbitrary number of classes can be included in the same diagram.  Or the same class can appear in multiple different relationship diagrams.  
+
+
+Since all relationships are associations, leaving out the association label is ok.  The only relationships that really need to be labeled are aggregations and composition (saying aggregation for composition or vice versa is ok, do not be concerned with the distinction, and ignore whether or not multiplicity is explicit, e.g., “0..*” can be omitted).  Ignore whether any generalization/specialization or other kinds of relationships are shown.
+
+
+Of the 10 total points, 5 points if all collaborators from the CRC cards appear in all their corresponding class diagram(s), labeled when aggregation/composition.  5 points for explanations of the relationships shown that make sense given the user stories. If partial credit may be warranted, ask me to look at it.  
+
+end grading #4***** 
+
+
+5.  Describe at least one design principle relevant to your project, and explain how you would modify your codebase to better fulfill this principle (or if your code already fulfills this principle, explain how).  This design principle could be related to any subset of your user stories, not necessarily the three chosen for the above questions.  It does not need to be one of the design principles discussed in class, but should be standard and well-known, do not invent your own. 15 points.
+
+
+*****begin grading #5
+
+
+Give 5 points for any choice of design principle that seems likely to be relevant for at least part of the project (nearly any standard design principle is probably applicable somehow somewhere). 
+ 
+The other 10 points are for whether the “how to modify” (or already written that way) discussion seems plausible. You do not need to check the actual codebase.
+
+
+Again, I do not expect the IAs to reverse engineer or re-design the systems, so it might help to compare the answers to this question across the team members.  
+
+
+If the choice of design principles or explanation does not make sense, or if partial credit may be warranted, ask me to look at it.  If you’ve never heard of some design principle that is mentioned, ask me to look at it.
+
+
+end grading #5***** 
+
+
+6. Using the information provided in your CRC cards and class diagrams, present an informal unit-testing test plan for each class (in prose and/or pseudo-code, do not include any actual code).  Make sure your unit tests include sample inputs and comparison of expected outputs to actual outputs.  10 points.
+
+
+*****begin grading #6
+
+There should be at least two unit-test cases for every operation (responsibility), one for valid inputs and one for invalid inputs. Do not be concerned with boundaries for ranges or coverage.  
+
+
+Of the 10 points, 5 points for including at least one unit-test case for each operation, with inputs and output checking included, regardless of whether inputs appear to be valid or invalid.  The other 5 points are for separate test cases that distinguish valid vs. invalid inputs for each operation. If partial credit may be warranted, ask me to look at it.  
+
+end grading #6***** 
+
+
+7. Using the information provided in your CRC cards and class diagrams, present an informal integration-testing test plan covering all method-calling and/or data-sharing relationships among these classes (in prose or pseudo-code, do not include any actual code). Explain how the test cases will be constructed in terms of sample inputs and checking outputs.  10 points. 10 points.
+
+
+*****begin grading #7
+
+There should be at least one integration test case for every collaboration (from CRC cards) or association (from class diagrams).  Do not be concerned with whether all plausible method calls or shared data is actually covered. 
+
+
+Of the 10 points, 5 points for including at least one test case for each collaboration or association (across different classes) from the previous questions.  The other 5 points are for some plausible explanation, for each of these test cases (or for all of them if the identical approach can be used), as to how code from one class could be forced to call code from the other class.  If partial credit may be warranted, ask me to look at it.  
+
+end grading #7***** 
+
+
+8. FANG is also extremely concerned about security and privacy threats, since if the public finds a security or privacy flaw in your product, the CEO may have to appear before the US Congress, the European Union Parliament, and other governing bodies, and expensive sanctions may be imposed on the company.  They do not expect you to solve all privacy and security problems, but you must disclose them in advance so FANG’s own staff can try to remove or mitigate.  Describe as many possible privacy and security threats against your product as you can think of.  Privacy addresses someone else reading a user’s sensitive data, and could even include someone else finding out that so-and-so is a user of your application. Security addresses someone else changing another user’s data, changing other application’s own data, taking control of the application, preventing others from using the application, etc. 15 points.
+
+*****begin grading #8
+
+Give the full 15 points for any non-trivial discussion of threats that doesn’t sound like nonsense. If there’s something about the team’s product such that neither security or privacy is an issue, i.e., they insist there aren’t any threats, ask me to look at it.  This is intended to be an easy 15 points for everyone. 
+
+end grading #8*****

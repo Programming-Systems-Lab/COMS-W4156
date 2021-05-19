@@ -1,0 +1,13 @@
+﻿Pick one of these as the application you, as the customer, would like to hire the software engineering team to develop.  Do not tell me or the class which one you picked, the idea is for the class to figure out something reasonably close - or not, I'll timeout if its taking too long and won't ask any questions myself.  You can only answer their questions with "yes", "no", "sometimes", “maybe” or "I don't know". Please do not give the class any hints by saying anything else, gestures, writing or drawing on the board, etc.
+
+
+1. An online multiplayer first-person shooter video game where all the player avatars are various kinds of ducks, and instead of shooting a laser gun they "quack" at each other. (Based on sample app from a textbook.)
+
+
+2. A shopping app where the user submits a photo of someone else’s shoes, and the app tells her where to buy them.  (Seen on “The Big Bang Theory”.)
+
+
+3. A "health" app that automatically records all the locations and time spent in any public restrooms entered by the user.  (Mixes from two real apps.)
+
+
+4. A game that records your highest score for how much time you hold your finger, without releasing, on a “press me” button displayed by the app.  (This really exists.)
