@@ -1,0 +1,176 @@
+  _____                          _
+ / ____|                        | |
+| |    _   _ _ __ _ __ ___ _ __ | |_
+| |   | | | | '__| '__/ _ \ '_ \| __|
+| |___| |_| | |  | | |  __/ | | | |_
+ \_____\__,_|_|  |_|  \___|_| |_|\__|
+  ___________________________________
+ /__________________________________/
+
+
+The current roles:
+  Teacher:
+    Description: An instructor who uses the app to collect and view attendance records for the students in their courses.
+  Student:
+    Description: A participant in a course, who uses ImHere to signal their attendance in a course.
+
+The current user stories:
+  Title: As a Teacher, I need to be able to add and remove courses to reflect their existence and allow students to mark their attendance and so I can see their attendance records for that course.
+  Title: As a Teacher, I need to be able to manage students’ enrollment in courses so they can mark themselves present and I can see their attendance record for that course.
+  Title: As a Teacher, I need to be able to manage the attendance windows so that students can mark themselves as present and I can see whether or not they’ve attended later.
+  Title: As a Teacher, I need to be able to see students’ attendance records for a course in order to judge how many classes they’ve attended.
+  Title: As a student, I need to be able to mark my attendance in a course during the attendance window so that the Teacher for the course will see that I attended.
+
+The current use cases:
+  Title: Teacher adds a course
+    Includes alternate flow which includes adding students in bulk
+  Title: Teacher removes a course
+  Title: Teacher adds a student to a course
+  Title: Teacher removes a student from a course
+  Title: Teacher opens an attendance window
+  Title: Teacher closes an attendance window
+  Title: Teacher sees attendance records per student for a course
+  Title: Student signs into a course’s attendance window
+
+  _______         _____       _
+ |__   __|/\     |  __ \     | |
+    | |  /  \    | |__) |___ | | ___
+    | | / /\ \   |  _  // _ \| |/ _ \
+    | |/ ____ \  | | \ \ (_) | |  __/
+    |_/_/    \_\ |_|  \_\___/|_|\___|
+  ____________________________________
+ /___________________________________/
+
+
+In addition to the current roles (teacher and student), we will add the role of "TA". TAs will have permissions to:
+
+  1. Sign into a course during its open attendance period (shared with students)
+  2. Open/close a course's attendance period (shared with teachers)
+  3. Collect/view attendance records (shared with teachers)
+
+So the TA will be a hybrid role between teachers and students.
+
+Teachers will be granted a new related permission as well:
+
+  1. Add TAs to courses
+  2. Remove TAs from courses
+
+By adding the TA role, we're proposing adding or amending the following roles:
+  Add TA Role:
+    Description: An assistant to the Teacher, a TA is enabled to do light administrative work for particular courses, granted and subsidiary by the Teacher. A TA also has their own attendance record for a course, as they can attend or skip classes themselves.
+  Amend Teacher Role:
+    Description: An instructor who uses the app to collect and view attendance records for the students and TAs in their courses. May delegate responsibilities to TAs.
+
+By adding the TA role, we’re proposing adding the following user stories:
+  Title: As a TA, I need to be able to open attendance windows to allow students and TAs to mark their presence
+  Title: As a TA, I need to be able to close attendance windows to prevent students and TAs from continuing to be able to mark their presence for this attendance window, for example if class has begun and the grace period is over.
+  Title: As a TA, I need to be able to mark my own attendance in a course for an attendance window so the Teacher and other TAs will know that I was present.
+  Title: As a teacher, I need to be able to add and remove TAs from the course to reflect who is and is not a TA of the course so they can manage attendance windows.
+
+By adding the TA role, we’re proposing amending the following user stories:
+  Previously: “Title: As a Teacher, I need to be able to manage the attendance windows so that students can mark themselves as present and I can see whether or not they’ve attended later.”
+    Change to: “Title: As a Teacher, I need to be able to manage the attendance windows so that students and TAs can mark themselves as present and I can see whether or not they’ve attended later.”
+  Previously: “Title: As a Teacher, I need to be able to see students’ attendance records for a course in order to judge how many classes they’ve attended.”
+    Change to: “Title: As a Teacher, I need to be able to see students’ and TAs’ attendance records for a course in order to judge how many classes they’ve attended.”
+
+
+By adding the TA role, we’re proposing adding the following use cases:
+  Title: TA opens attendance window
+    Actor: TA
+    Precondition: Attendance window for the course is currently closed
+    Precondition: TA is logged in to ImHere.
+    Trigger: TA is compelled to open an attendance window for the course
+    Basic Flow:
+      1. TA is presented with a series of courses.
+      2. TA finds course and opens a new attendance window for it.
+      3. TA notes the secret code for the attendance window.
+    Termination Outcome: Course attendance window is open
+    Alternate Flow A:
+      0-A: If not in TA mode, enter TA mode. Then merge into basic flow at step 1.
+
+  Title: TA closes attendance window
+    Actor: TA
+    Precondition: Attendance window for the course is currently open
+    Precondition: TA is logged in to ImHere.
+    Trigger: TA is compelled to close an attendance window for the course
+    Basic Flow:
+      1. TA is presented with a series of courses.
+      2. TA finds course and closes the attendance window for it.
+      3. Termination Outcome: Course attendance window is closed
+    Alternate Flow A:
+      0-A: If not in TA mode, enter TA mode. Then merge into basic flow at step 1.
+
+  Title: TA signs in to attendance window.
+    Actor: TA
+    Precondition: Attendance window for the course is currently open
+    Precondition: TA is logged in to ImHere.
+    Trigger: TA arrives at class and wants to mark their own attendance
+    Basic Flow:
+      1. TA is presented with a series of courses
+      2. TA finds course and clicks "sign in now" button
+    Termination Outcome: TA becomes signed in to the course for that attendance window
+
+  Title: Teacher adds a TA to a course.
+    Actor: Teacher
+    Precondition: TA is not already a TA
+    Precondition: Teacher is signed in to ImHere
+    Basic Flow:
+      1. Teacher selects relevant course.
+      2. Teacher registers new TA with TA’s uni.
+    Termination Outcome: TA becomes a TA for the course
+    Alternate Flow A:
+      0-A: If not in Teacher mode, enter Teacher mode. Then merge into basic flow at step 1.
+
+  Title: Teacher removes a TA from a course
+    Actor: Teacher
+    Precondition: TA is already a TA for the course.
+    Precondition: Teacher is signed in to ImHere
+    Basic Flow:
+      1. Teacher selects relevant course.
+      2. Teacher unregisters the TA by entering the TA’s uni.
+    Termination Outcome: TA is no longer a TA for the course
+    Alternate Flow A:
+      0-A: If not in Teacher mode, enter Teacher mode. Then merge into basic flow at step 1.
+
+
+ ______    _ _ _             _   _                 _
+|  ____|  | (_) |       /\  | | | |               | |
+| |__   __| |_| |_     /  \ | |_| |_ ___ _ __   __| | __ _ _ __   ___ ___
+|  __| / _` | | __|   / /\ \| __| __/ _ \ '_ \ / _` |/ _` | '_ \ / __/ _ \
+| |___| (_| | | |_   / ____ \ |_| ||  __/ | | | (_| | (_| | | | | (_|  __/
+|______\__,_|_|\__| /_/    \_\__|\__\___|_| |_|\__,_|\__,_|_| |_|\___\___|
+  ________________________________________________________________________
+ /_______________________________________________________________________/
+
+
+We will also add the ability for Teacher's to modify attendance records after they have been initially recorded.
+
+Teachers will be granted a new permission:
+  1. Toggle a student's attendance record for a particular attendance window.
+
+By adding attendance editing, we’re proposing adding the following additional user stories:
+  Title: As a teacher, I need to be able to review a student (or TA)’s attendance record per window for a course to audit their attendance.
+  Title: As a teacher, I want to mark a student (or TA) as either present or absent for a particular attendance window manually to correct for accidents such as forgetting to sign in or a student cheating and marking themselves present despite not actually being present.
+
+By adding attendance editing, we’re proposing the following additional use cases:
+  Title: Teacher views a student (or TA)'s attendance record per window for a course
+    Actor: Teacher
+    Precondition: Student/TA is registered for the course
+    Precondition: Teacher is signed in
+    Basic flow:
+      1. Teacher is presented with a list of courses
+      2. Teacher selects student or TA’s profile
+      3. Teacher is presented with a table of attendance records per window for the student or TA
+    Alternate Flow A:
+      0-A: If not in Teacher mode, enter Teacher mode. Then merge into basic flow at step 1.
+
+  Title: Teacher toggles a student (or TA)’s presence for a particular attendance window
+    Actor: Teacher
+    Precondition: Teacher is signed in
+    Basic Flow:
+      1. Teacher is presented with a series of courses
+      2. Teacher specifies course and student/TA
+      3. Teacher is presented with a list of attendance records for that course and student/TA (by attendance window)
+      4. Teacher toggles the attendance record in question
+    Alternate Flow A:
+      0-A: If not in Teacher mode, enter Teacher mode. Then merge into basic flow at step 1.

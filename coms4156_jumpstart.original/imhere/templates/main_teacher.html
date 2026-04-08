@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher View</title>
+    <style>
+    .btn-link {
+        border:none;
+        outline:none;
+        background:none;
+        cursor:pointer;
+        color:#4863a8;
+        padding-top:1em;
+        text-decoration:underline;
+        font-family:inherit;
+        font-size:inherit;
+    }
+    </style>
+</head>
+
+<body>
+    <form action="/switch_type" method="POST">
+    <button name="type" value="student">Switch to student view</button>
+    </form>
+    
+    <form action="/oauth/logout" method="POST">
+    <button name="logout">Logout</button>
+    </form><br>
+
+    <center>
+    <h2>ImHere</h2>
+
+    <a href="/teacher/add_class">Add a Class</a>
+    {% if not empty %}
+        <a href="/teacher/remove_class">Remove a Class</a><br><br> 
+    {% endif %}
+
+    {% for n in data %}
+        {% if n['active'] == 1 %}
+
+            <form method="POST" action="/teacher/view_class">
+            <button name="cid" value="{{n['cid']}}" class="btn-link"><h4>{{n['name']}}</h4>
+            </button>
+            </form>
+
+            <form method="POST" action="/teacher/">
+            <button name="close" value="{{n['cid']}}">Close Attendance Window
+            </button>
+            </form><br>
+
+            Secret Code:<br>
+            {{n['secret']}}<br><br>
+
+        {% elif n['active'] == 0 %}
+
+            <form method="POST" action="/teacher/view_class">
+            <button name="cid" value="{{n['cid']}}" class="btn-link"><h4>{{n['name']}}</h4></button></form>
+
+            <form method="POST" action="/teacher/">
+            <button name="open" value="{{n['cid']}}">Open Attendance Window
+            </button>
+            </form><br><br>
+
+        {% endif %}
+    {% endfor %}
+
+
+    </center>
+</body>
+</html>

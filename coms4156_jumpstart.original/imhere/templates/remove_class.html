@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Remove a Class</title>
+</head>
+<body>
+<center>
+
+    <h2>ImHere</h2><br>
+
+    <h4>Class List</h4>
+
+    <table cellspacing="10">
+
+        {% for n in data %}
+        <tr>
+            <td>{{n['name']}}</td>
+            <td>|</td>
+            <td>
+                <form method="POST" action="/teacher/remove_class">
+                    <button name="cid" value="{{n['cid']}}">Remove Class
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</center>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{course_name}}</title>
+    <style>
+        .beta table, .beta td, .beta th {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <center>
+
+    <h2>ImHere</h2><br>
+
+    <h3>{{course_name}}</h3>
+
+    {% if secret %}
+        <form method="POST" action="/teacher/view_class">
+        <button name="close" value="{{cid}}">Close Attendance Window
+        </button>
+        </form>
+
+        Secret Code:<br>
+        {{secret}}<br>
+
+    {% else %}
+        <form method="POST" action="/teacher/view_class">
+        <button name="open" value="{{cid}}">Open Attendance Window
+        </button>
+        </form><br>
+
+    {% endif %}
+
+    <table cellspacing="35">
+    <thead>
+    <tr>
+
+    <th>
+    Add Student to Class:<br>
+    <form method="POST" action="/teacher/view_class">
+        <input type="text" required name="add_student" placeholder="uni">
+        <br>
+        <button name="cid" value={{cid}}>add</button>
+    </form>
+    </th>
+
+    {% if students %}
+    <th>
+    Del Student from Class:<br>
+    <form method="POST" action="/teacher/view_class">
+        <input type="text" required name="remove_student" placeholder="uni">
+        <br>
+        <button name="cid" value={{cid}}>remove</button>
+    </form>
+    </th>
+    {% endif %}
+
+    </tr>
+    </thead>
+    </table>
+
+    {% if res == -1 %}
+        <font color="red">'{{uni}}' is an invalid uni</font>
+    {% elif res == -2 %}
+        <font color="red">'{{uni}}' is already in the class</font>
+    {% elif res == -3 %}
+        <font color="red">'{{uni}}' is not in the class to begin with</font>
+    {% endif %}
+
+    <br><br>
+
+    {% if students %}
+        {% if secret %}
+        <font color="red">attendance may be inaccurate due to the open sign-in window</font>
+        {% endif %}
+    <table cellspacing="5" class="beta" style="border-collapse:collapse">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>E-Mail</th>
+        <th>UNI</th>
+        <th>Attendance</th>
+    </tr>
+    </thead>
+
+    <!-- students is a list == [<RowProxy>, UNI, num_attendance_records] -->
+    {% for student in students %}
+    <tr>
+        <td align="center">{{student[0]['name']}}</td>
+        <td align="center">{{student[0]['email']}}</td>
+        <td align="center">{{student[1]}}</td>
+        <td align="center">{{student[2]}}/{{num_sessions}}</td>
+    </tr>
+    {% endfor %}
+    </table><br><br>
+    {% endif %}
+
+
+
+    <a href="/teacher/">Home</a>
+    </center>
+</body>
+</html>

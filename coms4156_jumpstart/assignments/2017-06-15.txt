@@ -1,0 +1,10 @@
+2017-06-15.txt
+
+Our class diagrams can be found at:
+https://github.com/TheFiggisAgency/placeholder_here/wiki/Class-diagrams
+
+Our OO Design Principle Considerations can be found at:
+https://github.com/TheFiggisAgency/placeholder_here/wiki/OO-Design-Considerations
+
+Our CRC cards are submitted to canvas as a PDF, with file name:
+CRC.pdf

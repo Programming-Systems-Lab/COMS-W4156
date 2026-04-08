@@ -1,0 +1,50 @@
+{% if student: %}
+  {% set courses = student.get_courses() %}
+  {% if courses|length == 0: %}
+    <h2>You don't take any courses yet.</h2>
+  {% else: %}
+    <h2>You take:</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Course Name</th>
+          <th>Sign in</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for course in courses %}
+          <tr>
+            <td>{{ course.get('name') }}</td>
+            <td>
+              {% set session = course.get_open_session() %}
+              {% if session is none: %}
+                -
+              {% elif course.currently_signed_in(student): %}
+                signed in
+              {% else: %}
+                <form method="POST" action="{{ url_for('sign_in', course_id=course.get_id()) }}">
+                  {% set id = course.get_id()|string + '-secret' %}
+                  <label for="{{ id }}">
+                    <input id="{{ id }}" type="text" name="secret" placeholder="secret">
+                  </label>
+                  <input type="submit" value="Sign in">
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% else: %}
+  <form method="POST" action="/register" style="text-align: center;">
+    <h4>You are not a Student</h4>
+    <input type="hidden" name="register_as" value="student">
+    <label for="uni-input">
+      UNI:
+      <input id="uni-input" name="uni" type="text" placeholder="UNI">
+    </label>
+    <input type="submit" value="Register as Student">
+  </form>
+{% endif %}

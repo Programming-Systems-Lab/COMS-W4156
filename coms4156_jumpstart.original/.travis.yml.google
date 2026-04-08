@@ -1,0 +1,30 @@
+# Reference - https://github.com/GoogleCloudPlatform/continuous-deployment-demo/blob/appengine_travis_deploy/.travis.yml
+
+dist: trusty
+sudo: required
+language: python
+python:
+- '2.7'
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_d4d6810438b5_key -iv $encrypted_d4d6810438b5_iv
+  -in credentials.tar.gz.enc -out credentials.tar.gz -d
+# If the SDK is not already cached, download it and unpack it
+- tar -xzf credentials.tar.gz
+- mkdir -p lib
+
+install:
+# Install the Python dependencies
+- pip install -r requirements.txt -t lib/
+script:
+- echo "No Script to run"
+
+deploy:
+    provider: gae
+    # Skip cleanup so api_key.py and vendored dependencies are still there
+    skip_cleanup: true
+    keyfile: cred.json
+    project: test-4156 #### This is your project name
+    default: true
+    on:
+        all_branches: true

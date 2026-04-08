@@ -1,0 +1,261 @@
+ _______        _      _____
+|__   __|      | |    / ____|
+   | | ___  ___| |_  | |     __ _ ___  ___  ___
+   | |/ _ \/ __| __| | |    / _` / __|/ _ \/ __|
+   | |  __/\__ \ |_  | |___| (_| \__ \  __/\__ \
+   |_|\___||___/\__|  \_____\__,_|___/\___||___/
+  ______________________________________________
+ /_____________________________________________/
+
+
+
+ ____  _            _    _
+|  _ \| |          | |  | |
+| |_) | | __ _  ___| | _| |__   _____  __
+|  _ <| |/ _` |/ __| |/ / '_ \ / _ \ \/ /
+| |_) | | (_| | (__|   <| |_) | (_) >  <
+|____/|_|\__,_|\___|_|\_\_.__/ \___/_/\_\
+
+- New user registration
+  - Make new users of type Teacher.
+  - Make new users of type Student.
+  - Also make sure you can register as a Teacher if you're already a Student, Student
+    if you're already a Teacher, etc. Make sure you can log in to
+    the new users.
+    - Try using an empty UNI when registering as a Student (should fail)
+    - Try using a very long UNI when registering as a Student (should
+      succeed)
+- User login
+  - Log in as a user who is exclusively a Teacher, a user who is
+    exclusively a Student, and a user who has a mixture of roles. Make
+    sure you can see your relevant courses.
+- Role switch - between all pairs
+  - Switch role in the UI. Make sure the UI reflects the new role. Make
+    sure the user does not have an option to change to a mode they don't
+    have as a role.
+    - from Teacher to Student
+    - from Student to Teacher
+    - from TA to Teacher
+    - from Teacher to TA
+    - from TA to Student
+    - from Student to TA
+- Adding courses
+  - Add a few courses as a Teacher. Make sure the course shows up in the
+    course list. Try with various names including already taken names,
+    empty string (should fail), and very long names.
+    - With initial UNIs
+      - With non-existant UNIs. This should fail.
+    - Without initial unis
+- Removing courses
+  - Remove some courses as a Teacher. Make sure the courses no longer
+    show up in the course list for the Teacher or for TAs or Students
+    who were in the old course.
+- Collect attendance
+  - Try to open an attendance window as a TA and as a Teacher on a
+    course that has a closed attendance window. Make sure the window
+    remains open when you refresh or switch to another user who
+    participates in the course.
+  - Try to open an attendance window twice by double-clicking the
+    button. It should be open at the end.
+  - Log in to an open window as a TA and as a Student. Make sure
+    the attendance record gets reflected on course page and attendance
+    details page for the user and course.
+  - Close window as TA/Teacher
+  - Try to close an attendance window twice by double-clicking the
+    button. It should be closed at the end.
+  - Close window as a TA and as a Teacher. Try as a TA closing
+    a window opened by the Teacher and as a Teacher closing a window
+    opened by a TA. In all cases, make sure the window remains closed
+    when refreshing and when switching to another user who participates
+    in the course.
+- Editing records
+  - Toggle records and make sure they persist over a refresh and update
+    the aggregated attendance record for the user on the course. Test
+    for both an attendance window that's open and a window that's closed.
+    - Equivalence classes: The behavior should be identical when the
+      target is a TA as when the target is a Student
+  - Open a window on a course. Open the attendance record for a student
+    as a Teacher. In another window, log in as the student and sign in
+    to the window. In the first window (as a Teacher), click "toggle"
+    for the current window. Make sure that the Student is still signed
+    in (indicated both for the student and the Teacher)
+- Teacher add to roster
+  - Add a Student to a course. Make sure the Student can see the course
+    when signed in as the Student. Make sure the Student is shown in the
+    class roster.
+  - Add a Student to a course again. Make sure the Student is not in any
+    way duplicated on the roster.
+  - Add a non-existant Student UNI to the course. This should fail.
+  - Add a TA to a course. Make sure the TA can see the course when signed
+    in as the TA. Make sure the TA is shown in the TA roster.
+  - Add a TA to a course again. Make sure the TA is not in any way
+    duplicated on the TA roster.
+  - Add a non-existant TA UNI to the course. This should fail.
+- Teacher delete from roster
+  - Delete a Student from a course. Make sure the Student is no longer
+    shown on the course roster and that the Student can no longer see the
+    course in their course list.
+  - Delete a Student from a course they're not in. This should fail.
+    - Equivalence class: A Student who has been in the course before but
+      has already been removed will have equivalent behavior to a Student
+      who has never been in the course before.
+  - Delete a TA from a course they TA. Make sure the TA is no longer shown
+    on the TA roster and that the TA can no longer see the course in their
+    course list. Make sure TA mode is no longer an option if the TA no
+    longer TAs any courses.
+  - Delete a TA from a course they don't TA. This should fail.
+    - Equivalence class: A TA who has TA'd the course before but has already
+      been removed will have equivalent behavior to a TA who has never TA'd
+      the course before.
+  - Re-add a Student or TA who has been removed from the course and make
+    sure the old attendance record has been deleted (should have 0 sign
+    ins just after re-add)
+    - Equivalence class: Students and TAs should have the same behavior
+
+  _____                _
+ / ____|              | |
+| |  __ _ __ ___ _   _| |__   _____  __
+| | |_ | '__/ _ \ | | | '_ \ / _ \ \/ /
+| |__| | | |  __/ |_| | |_) | (_) >  <
+ \_____|_|  \___|\__, |_.__/ \___/_/\_\
+                  __/ |
+                 |___/
+
+- Boundary case for attendance window
+  - Confirm no issue signing in at first/last second of open window.
+- Deleting course removes all related records
+  - Confirm server requests DB to update all tables with data linked to deleted course.
+- For Attendance Edit
+  - Confirm query to retrieve student specific records matches student requested from UI.
+
+  - Confirm returned records are all displayed correctly.
+    • Check records returned from DB query against those displayed by browser.
+  - Confirm toggle button makes correct updates.
+    1. Check requests to DB when button should mark present.
+    2. Check requests to DB when button should mark absent.
+  - Check for possible race conditions - rapid button clicking
+    • Is it possible for two requests to mark present(absent) be sent consecutively?
+    • System should gracefully handle duplicate message(s)
+    • Confirm attendance data not corrupted: no duplicate records.
+      - Check attendance count not negative or greater than session count.
+  - Check for consistency when editing records while an attendance window is open
+    • System should gracefully handle duplicate message(s)
+    • Confirm attendance data not corrupted: no duplicate records.
+      - Check attendance count not negative or greater than session count.
+
+
+Unit Design testing
+
+1.  Enrolling and hiring
+    + Enroll a student in a course and ensure the course has that
+      student and the student has that course.
+    + Promote that student to a TA for the course and ensure that
+      the course has that user as both a student and a TA and
+      that the user has the course both as a student and a TA
+    + Hire a TA for a course and ensure that the course has that
+      TA and the TA has that course.
+    + Enroll the TA as a student in that course and ensure that
+      the course has that user both as a student and a TA
+
+2.  Dropping and firing (Drop = remove as a student; fire = remove
+      as a TA)
+    + Drop a student from a course. Ensure the course no longer has
+      the student and the student no longer has the course. Ensure
+      no attendance records still exist for that student in that
+      course.
+    + Fire a TA from a course. Ensure the course no longer has the
+      TA and the TA no longer has the course. Ensure no attendance
+      records still exist for that TA in that course.
+    + Drop a student-TA from a course. Ensure the course no longer
+      has the user as a student, but still has the user as a TA.
+      Ensure the user still has the course. Ensure the attendance
+      records still exist for that user in that course.
+    + Fire a student-TA from a course. Ensure the course no longer
+      has the user as a TA, but still has the user as a student.
+      Ensure the user still has the course. Ensure the attendance
+      records still exist for that user in that course.
+
+3.  Attendance taking
+    + Sign in a student. Attendance records total and student should
+      be 1. Student should be signed in.
+    + Sign in a TA. Attendance records total should be 2, 1 for student
+      and 1 for TA. TA should be signed in.
+    + Sign in a Student-TA. Attendance records total should be 3, 1
+      for each user existing so far. Student-TA should be signed in.
+    + Close attendance window. Try to sign in as each user. All should
+      throw Exceptions. Attendance records should be unchanged.
+    + Open and close attendance window. Attendance records
+      should be the same. All users should be signed out.
+    + Try to sign in a student with incorrect and no secret. Should not work
+      and attendance records should be the same. course.sign_in
+      should return false
+    + Try to sign in a TA without secret. Should work normally.
+
+4.  Attendance windows
+    + Ensure course.session_count() is 0 to start.
+    + Ensure course.get_open_session() starts as None.
+    + Open session. Assert .open_session() returns a numerical secret
+    + Ensure course.get_open_session() is not None and has a secret equivalent
+      to secret gleaned from .open_session()
+    + Close session.
+    + Ensure course.get_open_session() is None.
+    + Ensure course.session_count() is 1.
+    + Open session, note numerical secret.
+    + Ensure course.session_count() is 2.
+    + Open session. Assert .open_session() returns same numerical secret.
+    + Ensure course.session_count() is still 2.
+    + Ensure course.get_open_session() is same numerical secret.
+    + Close session.
+    + Ensure course.session_count() is still 2.
+    + Close session.
+    + Ensure course.session_count() is still 2.
+    + Ensure course.get_open_session() is None.
+
+5.  Attendance manipulation
+    - Ensure course.get_attendance_details(student) is an empty list
+    - Open course window.
+    - Ensure course.get_attendance_details(student) has the following:
+        [
+          { 'user_id': <student's id>, 'session_id': <session_id>, 'attended': False }
+        ]
+    - Sign in as student.
+    - Ensure course.get_attendance_details(student) has the following:
+        [
+          { 'user_id': <student's id>, 'session_id': <session_id>, 'attended': True }
+        ]
+    - Try to sign again; ensure it fails
+    - Ensure course.get_attendance_details(student) has not changes
+    - Close course window.
+    - Ensure course.get_attendance_details(student) has not changed.
+    - Open course window.
+    - Ensure course.get_attendance_details(student) has the following:
+        [
+          { 'user_id': <student's id>, 'session_id': <old session id>, 'attended': True },
+          { 'user_id': <student's id>, 'session_id': <new session id>, 'attended': False },
+        ]
+    - Call course.edit_attendance_history(student=student, session_id=<new session id>, attended=<True>)
+    - Ensure second entry in detail switches to 'attended'=True
+    - Close course window.
+    - Ensure details have not changed
+    - Ensure course.get_attendance_details(student) has not changed.
+    - Call course.edit_attendance_history(student=student, session_id=<old session id>, attended=<False>)
+    - Ensure first entry in details switches to 'attended'=False
+    - Call course.edit_attendance_history(student=student, session_id=<old session id>, attended=<False>)
+    - Ensure details have not changed
+    - Call course.edit_attendance_history(student=student, session_id=<new session id>, attended=<True>)
+    - Ensure details have not changed
+    - Ensure course.currently_signed_in(student) is True
+    - Call course.edit_attendance_history(student=student, session_id=<new session id>, attended=<True>)
+    - Ensure details have not changed
+    - Ensure course.currently_signed_in(student) is True
+    - Call course.edit_attendance_history(student=student, session_id=<new session id>, attended=<False>)
+    - Repeat for ta and student_ta
+
+6.  Course creation and deletion
+    + Create a course. Ensure it has no students, no TAs, no open session, and session count is 0.
+    + Add a student, TA to course. Create some attendance records.
+    + Delete the course.
+    + Assert the course has no students, no TAs, no open session, and session count is 0.
+    + Assert student attendance records have been appropriately decremented, and student is no longer taking course.
+    + Assert TA attendance records have been appropriately decremented, and TA is no longer TA'ing course.
+    + Assert teacher no longer teaches course.

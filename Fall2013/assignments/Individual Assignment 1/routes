@@ -1,0 +1,28 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                                           controllers.Application.index()
+# Returns the record high close for the stock with the given ticker symbol. On error return 0.00.
+GET     /getRecordHigh/:ticker                      controllers.Application.getRecordHigh(ticker: String)
+# Returns the record low close for the stock with the given ticker symbol. On error return 0.00.
+GET     /getRecordLow/:ticker                       controllers.Application.getRecordLow(ticker: String)
+# Return the open price of the stock with the ticker parameter on the given date. On error return 0.00.
+GET     /getOpenPrice/:year/:month/:day/:ticker     controllers.Application.getOpenPrice(year: String, month: String, day: String, ticker: String)
+# Return the close price of the stock with the ticker parameter on the given date. On error return 0.00.
+GET     /getClosePrice/:year/:month/:day/:ticker    controllers.Application.getClosePrice(year: String, month: String, day: String, ticker: String)
+# Returns the total number of requests about stock prices, i.e. the above 4 routes.
+GET     /getRequestTotal                            controllers.Application.getRequestTotal()
+# Returns the ticker about which information was requested.  If none then return 0.00.
+GET     /getMostRecentTicker                        controllers.Application.getMostRecentTicker()
+# Returns the requestNumberth ticker requested.  If request number is 2 then return the second ticker requested.
+GET     /getXRequestedTicker/:requestNumber         controllers.Application.getXRequestedTicker(requestNumber: Integer)
+# Returns the highest close of any stock requested.  On error return 0.0
+GET     /getHighestClose                            controllers.Application.getHighestClose()
+# Returns the lowest close of any stock requested.  On error return 0.0
+GET     /getLowestClose                             controllers.Application.getLowestClose()
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+

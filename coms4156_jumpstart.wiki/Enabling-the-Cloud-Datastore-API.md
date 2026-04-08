@@ -1,0 +1,1 @@
+See closed issue and instructions at [https://github.com/GoogleCloudPlatform/getting-started-python/issues/50](https://github.com/GoogleCloudPlatform/getting-started-python/issues/50) 

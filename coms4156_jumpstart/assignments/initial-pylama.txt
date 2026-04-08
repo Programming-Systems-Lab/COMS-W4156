@@ -1,0 +1,59 @@
+  _____       _ _   _       _   _____       _
+ |_   _|     (_) | (_)     | | |  __ \     | |
+   | |  _ __  _| |_ _  __ _| | | |__) |   _| | __ _ _ __ ___   __ _
+   | | | '_ \| | __| |/ _` | | |  ___/ | | | |/ _` | '_ ` _ \ / _` |
+  _| |_| | | | | |_| | (_| | | | |   | |_| | | (_| | | | | | | (_| |
+ |_____|_| |_|_|\__|_|\__,_|_| |_|    \__, |_|\__,_|_| |_| |_|\__,_|
+                                       __/ |
+                                      |___/
+
+In the following command, `fd` refers to the project at
+https://github.com/sharkdp/fd. This was useful in getting pylama
+to only lint the relevant files (as it respects .gitignore).
+
+> fd ".*\.py" | xargs pylama
+imhere/imhere.py:11:1: W0611 'flask.g' imported but unused [pyflakes]
+imhere/imhere.py:17:80: E501 line too long (80 > 79 characters) [pycodestyle]
+imhere/imhere.py:23:1: E303 too many blank lines (3) [pycodestyle]
+imhere/imhere.py:70:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+imhere/imhere.py:299:13: E722 do not use bare except' [pycodestyle]
+imhere/__init__.py:1:1: W0611 '.imhere.app' imported but unused [pyflakes]
+models/users_model.py:4:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+models/users_model.py:22:13: E722 do not use bare except' [pycodestyle]
+models/users_model.py:28:5: E303 too many blank lines (2) [pycodestyle]
+models/index_model.py:21:51: W292 no newline at end of file [pycodestyle]
+models/courses_model.py:6:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+models/courses_model.py:132:5: E303 too many blank lines (2) [pycodestyle]
+models/teachers_model.py:2:1: W0611 'datetime.date' imported but unused [pyflakes]
+models/teachers_model.py:5:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+models/teachers_model.py:48:5: E303 too many blank lines (2) [pycodestyle]
+models/students_model.py:2:1: W0611 'datetime.date' imported but unused [pyflakes]
+models/students_model.py:5:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+models/model.py:2:1: W0611 'flask.current_app' imported but unused [pyflakes]
+models/model.py:4:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+config.py:21:1: W0611 'os' imported but unused [pyflakes]
+test_imhere.py:5:1: E265 block comment should start with '# ' [pycodestyle]
+test_imhere.py:6:1: E265 block comment should start with '# ' [pycodestyle]
+test_imhere.py:7:1: E265 block comment should start with '# ' [pycodestyle]
+test_imhere.py:8:1: E265 block comment should start with '# ' [pycodestyle]
+test_imhere.py:9:1: E265 block comment should start with '# ' [pycodestyle]
+test_imhere.py:11:1: W0611 'flask' imported but unused [pyflakes]
+test_imhere.py:12:1: W0611 'models.index_model' imported but unused [pyflakes]
+test_imhere.py:37:1: E303 too many blank lines (4) [pycodestyle]
+test_imhere.py:63:1: E303 too many blank lines (3) [pycodestyle]
+test_imhere.py:70:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:74:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:77:1: W293 blank line contains whitespace [pycodestyle]
+test_imhere.py:84:1: W293 blank line contains whitespace [pycodestyle]
+test_imhere.py:86:5: E303 too many blank lines (2) [pycodestyle]
+test_imhere.py:119:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:134:1: W293 blank line contains whitespace [pycodestyle]
+test_imhere.py:154:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:175:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:212:1: E302 expected 2 blank lines, found 1 [pycodestyle]
+test_imhere.py:236:80: E501 line too long (82 > 79 characters) [pycodestyle]
+test_imhere.py:244:1: E303 too many blank lines (4) [pycodestyle]
+test_imhere.py:375:80: E501 line too long (176 > 79 characters) [pycodestyle]
+test_imhere.py:404:80: E501 line too long (82 > 79 characters) [pycodestyle]
+test_imhere.py:498:80: E501 line too long (85 > 79 characters) [pycodestyle]
+test_imhere.py:510:80: E501 line too long (100 > 79 characters) [pycodestyle]

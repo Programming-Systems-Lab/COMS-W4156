@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Simple pre-commit script that runs the test suite.
+# See .git/hooks/pre-commit.sample for other examples.
+
+pytest test_design.py

@@ -1,0 +1,12 @@
+flask
+sqlalchemy
+psycopg2
+click
+oauth2client
+google-api-python-client
+requests
+requests_oauth
+httplib2
+pytest
+pytest-cov
+google-cloud==0.24.0

@@ -1,0 +1,129 @@
+(/Users/jonathanshor/anaconda2/envs/Python3) bash-3.2$ prospector --with-tool vulture
+Messages
+========
+
+.
+  Line: None
+    pep257: failure / Tool pep257 failed to run (exception was raised)
+
+appengine_config.py
+  Line: 1
+    pylint: import-error / Unable to import 'google.appengine.ext'
+
+config.py
+  Line: 21
+    pylint: unused-import / Unused import os
+  Line: 24
+    dodgy: secret / Possible hardcoded secret key
+    vulture: unused-variable / Unused variable SECRET_KEY
+  Line: 31
+    vulture: unused-variable / Unused variable DATA_BACKEND
+  Line: 35
+    vulture: unused-variable / Unused variable PROJECT_ID
+
+imhere/__init__.py
+  Line: 1
+    pylint: import-error / Unable to import 'imhere.imhere' (invalid syntax (<string>, line 96))
+    pyflakes: F401 / '.imhere.app' imported but unused (col 1)
+
+imhere/imhere.py
+  Line: 96
+    pylint: syntax-error / invalid syntax
+
+models/courses_model.py
+  Line: 1
+    pylint: import-error / Unable to import 'model'
+  Line: 4
+    pylint: import-error / Unable to import 'google.cloud'
+  Line: 6
+    vulture: unused-function / Unused function Courses
+  Line: 14
+    vulture: unused-function / Unused function get_course_name
+  Line: 20
+    vulture: unused-function / Unused function get_students
+  Line: 31
+    vulture: unused-function / Unused function add_student
+  Line: 61
+    vulture: unused-function / Unused function remove_student
+  Line: 97
+    vulture: unused-function / Unused function get_active_session
+  Line: 112
+    vulture: unused-function / Unused function close_session
+  Line: 133
+    vulture: unused-function / Unused function open_session
+  Line: 168
+    vulture: unused-function / Unused function get_secret_code
+  Line: 182
+    vulture: unused-function / Unused function get_num_sessions
+
+models/index_model.py
+  Line: 1
+    pylint: import-error / Unable to import 'model'
+  Line: 4
+    vulture: unused-function / Unused function Index
+  Line: 9
+    vulture: unused-function / Unused function is_student
+  Line: 16
+    vulture: unused-function / Unused function is_teacher
+
+models/model.py
+  Line: 1
+    pylint: import-error / Unable to import 'google.cloud'
+  Line: 2
+    pylint: import-error / Unable to import 'flask'
+    pylint: unused-import / Unused current_app imported from flask
+
+models/students_model.py
+  Line: 1
+    pylint: import-error / Unable to import 'model'
+  Line: 2
+    pylint: unused-import / Unused date imported from datetime
+  Line: 3
+    pylint: import-error / Unable to import 'google.cloud'
+  Line: 5
+    vulture: unused-function / Unused function Students
+  Line: 11
+    vulture: unused-function / Unused function get_uni
+  Line: 17
+    vulture: unused-function / Unused function get_courses
+  Line: 48
+    vulture: unused-function / Unused function has_signed_in
+  Line: 65
+    vulture: unused-function / Unused function insert_attendance_record
+  Line: 75
+    vulture: unused-function / Unused function get_num_attendance_records
+
+models/teachers_model.py
+  Line: 1
+    pylint: import-error / Unable to import 'model'
+  Line: 2
+    pylint: unused-import / Unused date imported from datetime
+  Line: 3
+    pylint: import-error / Unable to import 'google.cloud'
+  Line: 5
+    vulture: unused-function / Unused function Teachers
+  Line: 24
+    vulture: unused-function / Unused function get_courses_with_session
+  Line: 48
+    vulture: unused-function / Unused function add_course
+  Line: 73
+    vulture: unused-function / Unused function remove_course
+
+models/users_model.py
+  Line: 16
+    pylint: syntax-error / Missing parentheses in call to 'print'
+
+
+
+Check Information
+=================
+         Started: 2017-06-13 20:46:05.811159
+        Finished: 2017-06-13 20:46:07.888260
+      Time Taken: 2.08 seconds
+       Formatter: grouped
+        Profiles: default, no_doc_warnings, no_test_warnings, strictness_medium, strictness_high, strictness_veryhigh, no_member_warnings
+      Strictness: None
+  Libraries Used:
+       Tools Run: dodgy, mccabe, pep257, pep8, profile-validator, pyflakes, pylint, vulture
+  Messages Found: 46
+

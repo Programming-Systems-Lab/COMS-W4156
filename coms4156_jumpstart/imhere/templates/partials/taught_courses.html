@@ -1,0 +1,67 @@
+{% if teacher: %}
+  {% set courses = teacher.get_courses() %}
+  {% if courses|length == 0: %}
+    <h2>You don't teach any classes yet.</h2>
+  {% else: %}
+    <h2>You teach:</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Course Name</th>
+          <th>Attendance Window</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      {% if courses|length > 3: %}
+        <tfoot>
+          <tr>
+            <td>Course Name</td>
+            <td>Attendance Window</td>
+            <td>Actions</td>
+          </tr>
+        </tfoot>
+      {% endif %}
+
+      {% for course in courses %}
+        <tr>
+          <td>{{ course.get('name') }}</td>
+          <td>
+            {% set session = course.get_open_session() %}
+            {% if session is none: %}
+              <form action="{{ url_for('open_session', course_id=course.get_id()) }}" method="POST">
+                <input type="submit" value="Open Attendance Window">
+              </form>
+            {% else: %}
+              Secret: {{session['secret']}} <br />
+              <form action="{{ url_for('close_session', course_id=course.get_id()) }}" method="POST">
+                <input type="submit" value="Close Attendance Window">
+              </form>
+            {% endif %}
+          </td>
+          <td>
+            <form action="{{ url_for('view_course', course_id=course.get_id()) }}" method="GET">
+              <input type="submit" value="View">
+            </form>
+            <form action="{{ url_for('destroy_course', course_id=course.get_id()) }}" method="POST">
+              <input type="submit" value="Delete">
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+  <form action="{{ url_for('create_course') }}" method="POST">
+    <h3>Add Class</h3>
+    <label for="new-course-name">
+      Course name:
+      <input id="new-course-name" type="text" name="name" placeholder="Introductory Basket Weaving">
+    </label>
+    <input type="submit" value="Create">
+  </form>
+{% else: %}
+  <form method="POST" action="/register" style="text-align: center;">
+    <h4>You are not a Teacher</h4>
+    <input type="hidden" name="register_as" value="teacher">
+    <input type="submit" value="Register as Teacher">
+  </form>
+{% endif %}

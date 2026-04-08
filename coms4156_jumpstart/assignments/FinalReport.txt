@@ -1,0 +1,184 @@
+      ______ _             _   _____                       _
+     |  ____(_)           | | |  __ \                     | |
+     | |__   _ _ __   __ _| | | |__) |___ _ __   ___  _ __| |_
+     |  __| | | '_ \ / _` | | |  _  // _ \ '_ \ / _ \| '__| __|
+     | |    | | | | | (_| | | | | \ \  __/ |_) | (_) | |  | |_
+     |_|    |_|_| |_|\__,_|_| |_|  \_\___| .__/ \___/|_|   \__|
+                                         | |
+                                         |_|
+_by The Figgis Agency_
+
+## Key Links
+[GitHub Repo](https://github.com/TheFiggisAgency/placeholder_here)
+[GCloud Hosted App](https://coms4156-168718.appspot.com/)
+[Wiki version of Final Report](https://github.com/TheFiggisAgency/placeholder_here/wiki/Final-Report) (some revision history here)
+
+## Post-Mortem
+
+We set out to add two features: the TA role, and editable attendance records. Both have been successfully implemented. We also successfully implemented a tentative third feature: bulk import of UNIs from a file.
+
+In addition, we rewrote almost the entire application. The result is a cleaner, more consistent codebase. We feel that this was in fact instrumental to implementing the features: as the application was not huge to begin with, it allowed us to build the extensions on a well-known foundation.
+
+There are no differences executing the application either locally or in the cloud.
+
+All major bugs found were documented in github Issues, and were closed once resolved. We note that the two minor issues that arose in our final demo are documented in the following two issues, and will be left open:
+- [Pressing enter from single Add Student or Add Ta forms opens Bluk Add -> instead of submitting  ](https://github.com/TheFiggisAgency/placeholder_here/issues/14)
+- [Entering string of emojis as secret during sign-in produces blank error message ](https://github.com/TheFiggisAgency/placeholder_here/issues/15)
+
+
+## Final Static Analysis
+
+[Final prospector run output](https://github.com/TheFiggisAgency/placeholder_here/blob/final-report/assignments/FinalProspectorAnalysis.txt).
+This was run after the codebase was finalized. No further changes have been made.
+
+The most commonly reported error is actually pylint's inability to properly interpret the Python language standard **kwargs pattern of passing an arbitrary number of parameters as a dict. It also noted a few pep8 clean-ups that we missed. None of the messages indicated bugs as much as they were minor style violations.
+
+
+## System Testing
+
+The bulk of our system testing was done manually, but some of our programmatic tests breach into the definition of system tests due to the fact that most were not pure unit tests (in that we relied on state from earlier in the test; e.g. We call `course.add_student(student)` and then assert that `course.has_student(student)` is true rather than just checking to see if the database was updated correctly).
+
+Our manual system tests largely revolved around testing each of the routes individually, taking care to make sure application state is updated accordingly. Some routes' success is predicated on other routes' success, so it is possible for one of these checks to fail even if the route explicitly being tested itself has not failed, but if there is any failure of any of these checks, that is a bug somewhere in the app.
+
+#### Glossary
+
+The phrase "you should get an error/warning that says _____" or similar means the page should refresh and show yellow/red boxes with messages stacking from the top right.
+
+The phrase "the _____ page should reflect that" implies that the proper behavior of the page in response to the application state has been described under that page's route. If the proper behavior is not exhibited, the problem could lie either with the page not properly reflecting the application state or with the current test not properly affecting the application state.
+
+### Pages
+
+#### / (Home Page)
+
+- The home route should load the "log in" screen when not logged in.
+- The home route should load the course list when logged in (generally).
+- The home route should show "You are not a Teacher" if you have yet to register as a Teacher and show you a button to register as a teacher.
+- The home route should show "You are not a Student" if you have yet to register as a Student and show you a form to register as a student with UNI.
+- The home route should not show any section for TAing if you have not been assigned as a TA for a course.
+- The home route should show a log out button on the top left when logged in.
+- If you are registered as a teacher:
+  - The home route should show a form to add a class with a specified name.
+  - The home route should say "You don't teach any classes yet" if you have not added any courses yet or if you have deleted all of the courses you've ever made.
+  - The home route should show all courses you do teach if you have added courses, and for each:
+    - a button to open a new or close an existing attendance window, depending on the current state,
+    - the secret code if the attendance window is already open,
+    - a button to view the course details, and
+    - a button to delete the course.
+
+- If you are registered as a student:
+  - The home route should show "You don't take any courses yet." if you have not been enrolled in any courses.
+  - The home route should show a table of all courses you are enrolled in as a student with a "sign in" form asking for a secret code if the attendance window is open and you have not signed in. For courses you are enrolled in with no open attendance window there should be no information, and if you've already signed into the open attendance window it should tell you that.
+
+- If you are a TA
+  - The home route should show you a list of courses you TA, and for each:
+    - a button to open or close the attendance window, depending on its current state,
+    - the secret code if the attendance window is already open, and
+    - a button to view the course details.
+  - If the attendance window for a course you TA is open, there should also be a button allowing you to sign in. If it's closed, there should be no information, and if you've already signed into the open attendance window it should tell you that.
+
+#### /courses/<int:course_id> (Course Page)
+
+- An error page should show if the course does not exist or if the user is neither the teacher nor a TA of the course
+- There should be links to log out and to the home page
+- There should be a status report of the attendance window (stating whether it's open or closed, and the secret if the attendance window is open)
+- There should be a button to open or close the attendance window
+  - If the user is a TA and not signed in, there should be a button to sign into the attendance window
+- There should be a list of students (or not if there are no students)
+  - Each student should have a name, email, and accurate attendance record.
+  - Teachers should also be able to remove the student from the course with a "Remove" button.
+  - Teachers should also be able to view the student's attendance records with a "View" button.
+- If you're a teacher, there should be a form for adding one student, or for bulk adding students.
+  - Bulk adding from file is facilitated by the import file button: you should be prompted to select a file, and the contents of that file should be appended to the contents of the text field.
+  - Any file should be accepted by the import file button. Note the file will be decoded as ASCII text, and the form's text is interpreted as one UNI per line upon clicking "Add".
+- TAs should be displayed functionally identically to students in every way here, so check the two previous points for TAs, including bulk add.
+
+#### /courses/<int:course_id>/students/<int:student_id>/records
+
+#### /courses/<int:course_id>/tas/<int:ta_id>/records
+
+(Records page)
+
+- The page should serve an error if:
+  - the course does not exist,
+  - the student does not exist,
+  - the student is not a student of the course,
+  - the TA does not exist,
+  - the TA is not a TA of the course, or
+  - the logged in user does not teach the course.
+- If at least one attendance window has been opened for the course, there should be a list of attendance windows with their open and close times and a button that says whether the student or TA signed into that attendance window. Clicking that button should attempt to toggle the individual attendance record.
+- If no attendance windows have been opened for the course yet, the list will be empty.
+
+### Interaction
+
+#### POST /login
+
+- Starting from the home route logged out, pressing the log in button should redirect you to Google's OAuth screen
+
+#### POST /courses/<int:course_id>/sessions
+
+- On the home page
+  - As a Teacher looking at the "You teach" course list, click the button to open the attendance window. The window should open and the home page should reflect that.
+  - As a TA looking at the "You TA" course list, click the button to open the attendance window. The window should open and the home page should reflect that.
+  - Try both of the above as a user who is both a teacher and a TA. Should work the same.
+  - Try both of the above as a user who is also a student of the course. Should work the same.
+- On the course page
+  - As a Teacher, click the button to open the attendance window. The window should open and the course page should reflect that.
+  - As a TA, click the button to open the attendance window. The window should open and the course page should reflect that.
+
+#### POST /courses/<int:course_id>/sessions/current/close
+
+- Repeat the above route tests but close the attendance window rather than opening.
+- Make sure a TA can close a window opened by a teacher and a teacher can close a window opened by a TA.
+
+#### POST /courses/<int:course_id>/sessions/current/sign-in
+
+- On the home page
+  - As a student, fill in the "secret" input with any of the following and then click "sign in":
+    - A really, really long string
+    - Nothing
+    - The correct secret with whitespace added to the back, front, or in the middle
+    - You should get an error explaining that the secret was incorrect.
+  - As a student, fill in the "secret" input with the correct secret and click "sign in". You should be signed in and the page should reflect that.
+  - As a TA, just click the "sign in" button in the "You TA" section. You should be signed in and both the home page and the course page should reflect that.
+- On the course page
+  - Just click the "sign in" button in the "You TA" section. You should be signed in and both the course page and the home page should reflect that.
+
+#### POST /courses/<int:course_id>/students
+
+#### POST /courses/<int:course_id>/tas
+
+Must be signed in as the teacher of the course to do any of the following.  All of these tests occur on the course page.
+- Fill in the "UNI" field of the "Add student" form with any of the following and then click "add":
+  - An invalid UNI (one that does not correspond to an existing student)
+  - A valid UNI with whitespace before, in the middle, or after
+  - A very long string
+  - Any of the above should result in an error denoting that such a student does not exist.
+- Fill in the "UNI" field with a valid student UNI and click Add. The student should be added to the course and the page should reflect that. The student should also see the course on their home page.
+- Fill in the "UNI" field with the UNI of a student who is already in the course. No feedback should be given, and the student should still be in the course.
+- Don't fill in the "UNI" field at all and click Add. You should get an error denoting that you must include a UNI.
+- Fill in the "Bulk add" text area with UNIs separated by newlines
+  - Every line should be treated approximately equivalently to the above, with the errors replaced for warnings
+  - Any error should not stop the bulk add from succeeding on the whole. For example, if you add a valid UNI and an invalid UNI, the valid UNI's student should be added to the course, while the invalid UNI should result in a warning that no such student exists. Empty lines should receive no message at all.
+- Repeat all of the above for TAs. Everything should behave identically.
+- A student should be able to be a TA and vice versa.
+
+#### DELETE /courses/<int:course_id>/students/<int:student_id>
+
+#### DELETE /courses/<int:course_id>/tas/<int:ta_id>
+
+Must be signed in as the teacher of the course to do any of the following.  All of these tests occur on the course page.
+- Click "Remove" to remove a student. The student should be removed from the course and the page should reflect that. The student should no longer see the course.
+- Unenrolling a student that also TAs the course should not remove the TA.
+- Click "Remove" to remove a TA. The TA should be removed from the course and the page should reflect that. The TA should no longer see the course.
+- Removing a TA that is also enrolled as a student should not unenroll the student.
+
+#### POST /courses/<int:course_id>/students/<int:student_id>/records/<int:session_id>
+
+#### POST /courses/<int:course_id>/tas/<int:ta_id>/records/<int:session_id>
+
+Must be signed in as the teacher of the course to do any of the following.  All of these tests occur on the attendance records page for a particular student/TA that is associated with the course.
+- Toggle an attendance record(s), and confirm the toggle button value changes.
+- Toggle an attendance record(s), and confirm the total attended value updates correctly when returning to the course page.
+- After creating some attendance records for a student/TA, unenroll them as a student from the course. Verify that their attendance records remain unchanged.
+- Perform the same test, but remove them from being a TA for the course. Verify that their attendance records remain unchanged.
+- After creating some attendance records for a student/TA, remove them from the course as both a student and TA. Re-add them to the course in either capacity, and verify their attendance records from before being removed are still gone (meaning they show as not attending any sessions from before being re-added).

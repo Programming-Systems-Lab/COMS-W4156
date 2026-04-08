@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student View</title>
+</head>
+
+<body>
+    <form action="/switch_type" method="POST">
+    <button name="type" value="teacher">Switch to teacher view</button>
+    </form>
+    
+    <form action="/oauth/logout" method="POST">
+    <button name="logout">Logout</button>
+    </form><br>
+    
+    <center>
+    <h2>ImHere</h2><br>
+
+    <!-- first show classes that have an available session -->
+    {% for n in data %}
+        {% if n['active'] == 1 %}
+
+            <h4>{{n['name']}}</h4>
+
+            {% if valid %}
+                Successful sign-in!
+            {% elif signed_in %}
+                You have already signed into the session!
+            {% else %}
+
+            <form action="/student/" method="post">
+                Sign in now!
+                <input type="text" name="secret_code" placeholder="Secret Code">
+                <input type="submit" value="Submit">
+            </form><br>
+
+                {% if submitted %}
+                    {% if not valid %}
+                    <font color="red">Invalid Secret Code</font>
+                    {% endif %}
+                {% endif %}
+
+            {% endif %}
+
+        {% endif %}
+    {% endfor %}
+
+    <!-- then show classes that are not ongoing at this time/date -->
+    {% for n in data %}
+        {% if n['active'] == 0 %}
+
+            <h4>{{n['name']}}</h4>
+            No sign-in window available!
+            <br>
+
+        {% endif %}
+    {% endfor %}
+
+    </center>
+
+</body>
+</html>

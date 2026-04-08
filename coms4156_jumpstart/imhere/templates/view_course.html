@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ course.get('name') }}</title>
+  <style>
+    #bulk-student-adder {
+      display: none;
+    }
+
+    #bulk-student-adder.open {
+      display: block;
+    }
+
+    #bulk-ta-adder {
+      display: none;
+    }
+
+    #bulk-ta-adder.open {
+      display: block;
+    }
+
+  </style>
+  <script>
+    // students
+    window.onload = () => {
+      // set up bulk student stuff
+      (() => {
+        const openBulkButton = document.querySelector('#open-bulk-student')
+        const bulkArea = document.querySelector('#bulk-student-adder')
+        let open = false
+        openBulkButton.addEventListener('click', e => {
+          e.preventDefault()
+          if (open) {
+            bulkArea.classList.remove('open')
+            open = false
+          } else {
+            bulkArea.classList.add('open')
+            open = true
+          }
+        })
+
+        const bulkFileInput = document.querySelector('#student-file')
+        const bulkTextInput = document.querySelector('#student-unis')
+        bulkFileInput.addEventListener('change', () => {
+          if (bulkFileInput.files.length === 0) {
+            return
+          }
+          const fr = new FileReader()
+          try {
+            fr.onload = e => {
+              bulkTextInput.value += e.target.result
+              bulkFileInput.value = ''
+            }
+
+            fr.readAsText(bulkFileInput.files[0])
+          } catch (e) {
+            alert('Some kind of error occurred. Check the console for more information.')
+            console.error(e)
+          }
+        })
+      })()
+
+      // set up bulk TA stuff
+      ;(() => {
+        const openBulkButton = document.querySelector('#open-bulk-ta')
+        const bulkArea = document.querySelector('#bulk-ta-adder')
+        let open = false
+        openBulkButton.addEventListener('click', e => {
+          e.preventDefault()
+          if (open) {
+            bulkArea.classList.remove('open')
+            open = false
+          } else {
+            bulkArea.classList.add('open')
+            open = true
+          }
+        })
+
+        const bulkFileInput = document.querySelector('#ta-file')
+        const bulkTextInput = document.querySelector('#ta-unis')
+        bulkFileInput.addEventListener('change', () => {
+          if (bulkFileInput.files.length === 0) {
+            return
+          }
+          const fr = new FileReader()
+          try {
+            fr.onload = e => {
+              bulkTextInput.value += e.target.result
+              bulkFileInput.value = ''
+            }
+
+            fr.readAsText(bulkFileInput.files[0])
+          } catch (e) {
+            alert('Some kind of error occurred. Check the console for more information.')
+            console.error(e)
+          }
+        })
+      })()
+    }
+  </script>
+</head>
+<body>
+  <a href="/logout">Log out</a>
+  <a href="/">Home</a>
+  {% include 'partials/messages.html' %}
+  <div style="padding: 20px; margin: 0 auto; max-width: 900px;">
+    <center><h2>I'm Here</h2></center>
+    <center><h1>{{ course.get('name') }}</h1></center>
+    <!-- Attendance window management -->
+    {% set session = course.get_open_session() %}
+    {% if session is none: %}
+      <h3>Attendance Window is closed</h3>
+      <form method="POST" action="{{ url_for('open_session', course_id=course.get_id()) }}">
+        <input type="Submit" value="Open Attendance Window">
+      </form>
+    {% else: %}
+      <h3>Attendance Window is open</h3>
+      <p><strong>Secret:</strong> {{ session['secret'] }}</p>
+      <form method="POST" action="{{ url_for('close_session', course_id=course.get_id()) }}">
+        <input type="Submit" value="Close Attendance Window">
+      </form>
+      {% if ta and ta.tas_course(course): %}
+        <p>
+          {% if course.currently_signed_in(ta): %}
+            Signed in
+          {% else: %}
+            <form action="{{ url_for('sign_in', course_id=course.get_id()) }}" method="POST">
+              <input type="submit" value="Sign in">
+            </form>
+          {% endif %}
+        </p>
+      {% endif %}
+    {% endif %}
+
+    <br>
+    <br>
+    <br>
+    <h2>Students</h2>
+    {% if teacher and teacher.teaches_course(course) %}
+      Add Student to Class:<br>
+      <form method="POST" action="{{ url_for('add_student_to_course', course_id=course.get_id()) }}">
+        <input type="text" name="uni" placeholder="UNI">
+        <br>
+
+        <button id="open-bulk-student">Bulk Add -&gt;</button>
+        <div id="bulk-student-adder">
+          <form method="POST" action="{{ url_for('add_student_to_course', course_id=course.get_id()) }}">
+            <textarea id="student-unis" name="unis"></textarea>
+            <label for="student-file">
+              <span style="border: 1px solid grey; border-radius: 2px; cursor: pointer; padding: 5px;">Import file</span>
+              <input type="file" id="student-file" style="display: none">
+            </label>
+        </div>
+        <input type="submit" value="Add">
+      </form>
+    {% endif %}
+
+    {% set students = course.get_students() %}
+    {% if students|length > 0: %}
+      <br>
+      <br>
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Record</th>
+            {% if teacher and teacher.teaches_course(course) %}
+              <th>Remove</th>
+              <th>View Records</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set session_count = course.session_count() %}
+          {% for student in students: %}
+            <tr>
+              <td>{{ student.get('name', '<unnamed>') }}</td>
+              <td>{{ student.get('email', '<no email>') }}</td>
+              <td>{{ course.get_attendance_records(student=student)|length }}/{{ session_count }}</td>
+              {% if teacher and teacher.teaches_course(course) %}
+                <td>
+                  <form method="POST" action="{{ url_for('remove_student_from_course', course_id=course.get_id(), student_id=student.get_id()) }}?delete=true">
+                    <input type="submit" value="Remove">
+                  </form>
+                </td>
+                <td>
+                  <form action="{{ url_for('view_student_records', course_id=course.get_id(), student_id=student.get_id()) }}" method="GET">
+                    <input type="submit" value="View">
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    <br>
+    <br>
+    <br>
+    <h2>TAs</h2>
+
+    {% if teacher and teacher.teaches_course(course) %}
+      Add TA to Class:<br>
+      <form method="POST" action="{{ url_for('add_ta_to_course', course_id=course.get_id()) }}">
+        <input type="text" name="uni" placeholder="UNI">
+        <br>
+        <button id="open-bulk-ta">Bulk Add -&gt;</button>
+        <div id="bulk-ta-adder">
+          <form method="POST" action="{{ url_for('add_ta_to_course', course_id=course.get_id()) }}">
+            <textarea id="ta-unis" name="unis"></textarea>
+            <label for="ta-file">
+              <span style="border: 1px solid grey; border-radius: 2px; cursor: pointer; padding: 5px;">Import file</span>
+              <input type="file" id="ta-file" style="display: none">
+            </label>
+        </div>
+
+        <input type="submit" value="Add">
+      </form>
+    {% endif %}
+
+    {% set tas = course.get_TAs() %}
+    {% if tas|length > 0: %}
+      <br>
+      <br>
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Record</th>
+            {% if teacher and teacher.teaches_course(course) %}
+              <th>Remove</th>
+              <th>View Records</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set session_count = course.session_count() %}
+          {% for ta in tas: %}
+            <tr>
+              <td>{{ ta.get('name', '<unnamed>') }}</td>
+              <td>{{ ta.get('email', '<no email>') }}</td>
+              <td>{{ course.get_attendance_records(ta=ta)|length }}/{{ session_count }}</td>
+              {% if teacher and teacher.teaches_course(course) %}
+                <td>
+                  <form method="POST" action="{{ url_for('remove_ta_from_course', course_id=course.get_id(), ta_id=ta.get_id()) }}?delete=true">
+                    <input type="submit" value="Remove">
+                  </form>
+                </td>
+                <td>
+                  <form action="{{ url_for('view_ta_records', course_id=course.get_id(), ta_id=ta.get_id()) }}" method="GET">
+                    <input type="submit" value="View">
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</body>
+</html>

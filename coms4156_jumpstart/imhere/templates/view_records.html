@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ target.get('name') }}'s attendance in {{ course.get('name') }}</title>
+</head>
+<body>
+  <a href="/logout">Log out</a>
+  <a href="/">Home</a>
+  <a href="/courses/{{ course.get_id() }}">{{ course.get('name') }}</a>
+  {% include 'partials/messages.html' %}
+  <div style="padding: 20px; margin: 0 auto; max-width: 900px;">
+    <center><h2>I'm Here</h2></center>
+    <center><h1>{{ course.get('name') }}</h1></center>
+    <center><h2>{{ target.get('name') }}</h2></center>
+
+    <table border="1">
+      <thead>
+        <th>Opened at</th>
+        <th>Closed at</th>
+        <th>Attended? (click to toggle)</th>
+      </thead>
+      <tbody>
+        {% for record in records: %}
+          <tr>
+            <td>{{ record['opened_at'].strftime('%m-%d %H:%M') }}</td>
+            <td>{{ (record['closed_at'] and record['closed_at'].strftime('%m-%d %H:%M')) or '(open)' }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('modify_' + target_type + '_attendance_record', course_id=course.get_id(), session_id=record['session_id'], **{ (target_type + '_id'): target.get_id() }) }}">
+                <input type="hidden" name="change-to" value="{{ not record['attended'] }}">
+                <input type="submit" value="{{ 'Yes' if record['attended'] else 'No' }}">
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1999 @@
+unittest_log.txt
+
+
+[2017-06-21 14:42:20]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F.F
+
+=================================== FAILURES ===================================
+_________________________ test_attendance_manipulation _________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (attendances[-1] and
+                        state['secret'] is not None), 'course.currently_signed_in(student) incorrect'
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+            routine()
+            course.add_TA(student)
+>           routine()
+
+test_design.py:460:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:435: in routine
+    open()
+test_design.py:398: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (attendances[-1] and
+                state['secret'] is not None), 'course.currently_signed_in(student) incorrect'
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 4
+E       assert [{'attended':...50056151040L}] == [{'attended': ...50056151040L}]
+E         At index 0 diff: {'attended': False, 'user_id': 5730450056151040L, 'session_id': 4914755504439296L} != {'attended': False, 'user_id': 5730450056151040L, 'session_id': 5681904711892992L}
+E         Use -v to get the full diff
+
+test_design.py:391: AssertionError
+________________________ test_course_creation_deletion _________________________
+
+    def test_course_creation_deletion():
+        with common_context() as context:
+            course = context['course']
+            teacher = context['teacher']
+            student = context['student']
+            ta = context['ta']
+
+            assert not course.get_students(), 'New course has students.'
+            assert not course.get_TAs(), 'New course has TAs.'
+            assert course.get_open_session() is None, 'New course has open session.'
+>           assert course.session_count == 0, 'New course has non-zero session count.'
+E           AssertionError: New course has non-zero session count.
+E           assert <bound method Course.session_count of <models.courses_model.Course object at 0x7f1aa584da10>> == 0
+E            +  where <bound method Course.session_count of <models.courses_model.Course object at 0x7f1aa584da10>> = <models.courses_model.Course object at 0x7f1aa584da10>.session_count
+
+test_design.py:497: AssertionError
+===================== 2 failed, 5 passed in 75.95 seconds ======================
+[2017-06-21 14:43:48]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+[2017-06-21 16:17:34]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F.F
+
+=================================== FAILURES ===================================
+_________________________ test_attendance_manipulation _________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+>           routine()
+
+test_design.py:459:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:440: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 3
+E       assert [{'attended':...05713858560L}] == [{'attended': ...05713858560L}]
+E         At index 0 diff: {'attended': False, 'user_id': 5696605713858560L, 'session_id': 4924514743877632L} != {'attended': True, 'user_id': 5696605713858560L, 'session_id': 6252104570109952L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+________________________ test_course_creation_deletion _________________________
+
+    def test_course_creation_deletion():
+        with common_context() as context:
+            course = context['course']
+            teacher = context['teacher']
+            student = context['student']
+            ta = context['ta']
+
+            assert not course.get_students(), 'New course has students.'
+            assert not course.get_TAs(), 'New course has TAs.'
+            assert course.get_open_session() is None, 'New course has open session.'
+>           assert course.session_count == 0, (
+                'New course reporting {} session count.'.format(course.session_count))
+E           AssertionError: New course reporting <bound method Course.session_count of <models.courses_model.Course object at 0x7ff8ad64ff90>> session count.
+E           assert <bound method Course.session_count of <models.courses_model.Course object at 0x7ff8ad64ff90>> == 0
+E            +  where <bound method Course.session_count of <models.courses_model.Course object at 0x7ff8ad64ff90>> = <models.courses_model.Course object at 0x7ff8ad64ff90>.session_count
+
+test_design.py:498: AssertionError
+===================== 2 failed, 5 passed in 69.05 seconds ======================
+[2017-06-21 16:19:08]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+
+[2017-06-21 16:20:29]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F.F
+
+=================================== FAILURES ===================================
+_________________________ test_attendance_manipulation _________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+            routine()
+            course.add_TA(student)
+>           routine()
+
+test_design.py:461:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 4
+E       assert [{'attended':...43370604544L}] == [{'attended': ...43370604544L}]
+E         At index 0 diff: {'attended': False, 'user_id': 5631943370604544L, 'session_id': 5142768607297536L} != {'attended': False, 'user_id': 5631943370604544L, 'session_id': 5167500102729728L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+________________________ test_course_creation_deletion _________________________
+
+    def test_course_creation_deletion():
+        with common_context() as context:
+            course = context['course']
+            teacher = context['teacher']
+            student = context['student']
+            ta = context['ta']
+
+            assert not course.get_students(), 'New course has students.'
+            assert not course.get_TAs(), 'New course has TAs.'
+            assert course.get_open_session() is None, 'New course has open session.'
+            assert course.session_count() == 0, (
+                'New course reporting {} session count.'.format(course.session_count()))
+
+            course.add_student(student)
+            course.add_TA(student)
+            add_attendance_records(course, [student, ta], 2)
+
+>           teacher.remove_course(course)
+E           AttributeError: 'Teacher' object has no attribute 'remove_course'
+
+test_design.py:505: AttributeError
+===================== 2 failed, 5 passed in 80.41 seconds ======================
+[2017-06-21 16:21:54]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+
+[2017-06-22 01:18:11]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ rm -rf ~/.config/gcloud/emulators/datastore/
+[2017-06-22 01:18:33]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================================== test session starts ==============================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+=================================================== FAILURES ====================================================
+_________________________________________ test_attendance_manipulation __________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+            routine()
+            course.add_TA(student)
+>           routine()
+
+test_design.py:461:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 4
+E       assert [{'attended':...14304094208L}] == [{'attended': ...14304094208L}]
+E         At index 0 diff: {'attended': False, 'user_id': 5743114304094208L, 'session_id': 5395507836878848L} != {'attended': False, 'user_id': 5743114304094208L, 'session_id': 5720758194012160L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+====================================== 1 failed, 6 passed in 77.71 seconds ======================================
+[2017-06-22 01:20:09]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================================== test session starts ==============================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+=================================================== FAILURES ====================================================
+_________________________________________ test_attendance_manipulation __________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+>           routine()
+
+test_design.py:459:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:440: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 3
+E       assert [{'attended':...70337755136L}] == [{'attended': ...70337755136L}]
+E         At index 0 diff: {'attended': False, 'user_id': 5998970337755136L, 'session_id': 5924915974766592L} != {'attended': True, 'user_id': 5998970337755136L, 'session_id': 5931427682058240L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+====================================== 1 failed, 6 passed in 71.57 seconds ======================================
+[2017-06-22 01:21:35]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================================== test session starts ==============================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+=================================================== FAILURES ====================================================
+_________________________________________ test_attendance_manipulation __________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+            routine()
+            course.add_TA(student)
+>           routine()
+
+test_design.py:461:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:440: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 5
+E       assert [{'attended':...02102609920L}] == [{'attended': ...02102609920L}]
+E         At index 0 diff: {'attended': False, 'user_id': 4838702102609920L, 'session_id': 5385348360175616L} != {'attended': False, 'user_id': 4838702102609920L, 'session_id': 5411117358645248L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+====================================== 1 failed, 6 passed in 82.94 seconds ======================================
+[2017-06-22 01:23:07]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================================== test session starts ==============================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+=================================================== FAILURES ====================================================
+_________________________________________ test_attendance_manipulation __________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+            routine()
+            course.add_TA(student)
+            routine()
+            course.remove_student(student)
+>           routine()
+
+test_design.py:463:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 6
+E       assert [{'attended':...55480340480L}] == [{'attended': ...55480340480L}]
+E         At index 0 diff: {'attended': False, 'user_id': 4937455480340480L, 'session_id': 5440908057116672L} != {'attended': False, 'user_id': 4937455480340480L, 'session_id': 5474337532411904L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+====================================== 1 failed, 6 passed in 94.14 seconds ======================================
+[2017-06-22 01:25:10]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+
+[2017-06-26 15:04:08]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+================================================= test session starts ==================================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F.F
+
+======================================================= FAILURES =======================================================
+_____________________________________________ test_attendance_manipulation _____________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+>           routine()
+
+test_design.py:459:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 2
+E       assert [{'attended':...324608L, ...}] == [{'attended': ...44713082880L}]
+E         At index 0 diff: {'closed_at': None, 'attended': False, 'opened_at': datetime.datetime(2017, 6, 26, 15, 5, 15, 491321, tzinfo=<UTC>), 'session_id': 5676582576324608L, 'user_id': 5678444713082880L} != {'attended': False, 'user_id': 5678444713082880L, 'session_id': 5676582576324608L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+____________________________________________ test_course_creation_deletion _____________________________________________
+
+    def test_course_creation_deletion():
+        with common_context() as context:
+            course = context['course']
+            teacher = context['teacher']
+            student = context['student']
+            student_records = course.get_attendance_records(student=student)
+            ta = context['ta']
+            ta_records = course.get_attendance_records(student=ta)
+
+            assert not course.get_students(), 'New course has students.'
+            assert not course.get_TAs(), 'New course has TAs.'
+            assert course.get_open_session() is None, 'New course has open session.'
+            assert course.session_count() == 0, (
+                'New course reporting {} session count.'.format(course.session_count()))
+
+            course.add_student(student)
+            course.add_TA(student)
+>           add_attendance_records(course, [student, ta], 2)
+
+test_design.py:505:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:74: in add_attendance_records
+    student.sign_in(course, secret)
+models/students_model.py:30: in sign_in
+    return course.sign_student_in(self, secret)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <models.courses_model.Course object at 0x7f23232dd9d0>, student = <models.tas_model.TA object at 0x7f23232ddb50>
+secret = 4515L
+
+    def sign_student_in(self, student, secret=None):
+        if not self.fetched:
+            raise ValueError('Course must be saved to sign in to')
+
+        if not student.fetched:
+            raise ValueError('Student must be saved to sign in')
+
+        if not self.has_student(student) and not self.has_TA(student):
+>           raise ValueError('Student must be in course to sign in')
+E           ValueError: Student must be in course to sign in
+
+models/courses_model.py:237: ValueError
+========================================= 2 failed, 5 passed in 72.88 seconds ==========================================
+[2017-06-26 15:05:27]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+[2017-06-26 15:35:20]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+================================================= test session starts ==================================================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+======================================================= FAILURES =======================================================
+_____________________________________________ test_attendance_manipulation _____________________________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+>           routine()
+
+test_design.py:459:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 2
+E       assert [{'attended':...431232L, ...}] == [{'attended': ...24770906112L}]
+E         At index 0 diff: {'closed_at': None, 'attended': False, 'opened_at': datetime.datetime(2017, 6, 26, 15, 36, 23, 973989, tzinfo=<UTC>), 'session_id': 5764878782431232L, 'user_id': 5140324770906112L} != {'attended': False, 'user_id': 5140324770906112L, 'session_id': 5764878782431232L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+========================================= 1 failed, 6 passed in 75.64 seconds ==========================================
+[2017-06-26 15:36:40]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.
+
+
+[2017-06-27 10:00:50]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$ python -m pytest test_design.py
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.12, pytest-3.1.2, py-1.4.34, pluggy-0.4.0
+rootdir: /home/jonathan/placeholder_here, inifile:
+collected 7 items
+
+test_design.py ....F..
+
+=================================== FAILURES ===================================
+_________________________ test_attendance_manipulation _________________________
+
+    def test_attendance_manipulation():
+        with common_context() as context:
+            course = context['course']
+            student = context['student']
+            ta = context['ta']
+            course.add_student(student)
+
+            state = {
+                'attendances': {},
+                'sessions': list(),
+                'secret': None,
+                'user': None
+            }
+
+            def test():
+                attendances = state['attendances'][state['user'].get_id()]
+                expected = [
+                    {
+                        'user_id': state['user'].get_id(),
+                        'session_id': state['sessions'][i],
+                        'attended': attendances[i]
+                    }
+                    for i in range(len(state['sessions']))
+                ]
+
+                if len(attendances) > 0:
+                    assert course.currently_signed_in(state['user']) == (
+                        attendances[-1] and state['secret'] is not None), (
+                        'course.currently_signed_in(student) incorrect')
+                else:
+                    assert not course.currently_signed_in(state['user']), (
+                        'course.current_signed_in(student) is True despite no open window')
+
+                details = course.get_attendance_details(state['user'])
+                assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+                    len(state['sessions']) + 1)
+
+            def open():
+                state['secret'] = course.open_session()
+                state['sessions'].append(course.get_open_session().key.id)
+                state['attendances'][state['user'].get_id()].append(False)
+                test()
+
+            def close():
+                course.close_session()
+                state['secret'] = None
+                test()
+
+            def login():
+                if state['secret'] is None:
+                    with pytest.raises(courses_model.CourseNotTakingAttendance):
+                        state['user'].sign_in(course, state['secret'])
+                elif state['attendances'][state['user'].get_id()][-1]:
+                    with pytest.raises(ValueError, message='Student already signed into session'):
+                        state['user'].sign_in(course, state['secret'])
+                else:
+                    state['attendances'][state['user'].get_id()][-1] = True
+                    state['user'].sign_in(course, state['secret'])
+
+                test()
+
+            def mutate(index, attended):
+                mutation = {
+                    'session_id': state['sessions'][index],
+                    'attended': attended
+                }
+
+                if state['user'].as_TA().tas_course(course):
+                    mutation['ta'] = state['user'].as_TA()
+                elif state['user'].takes_course(course):
+                    mutation['student'] = state['user']
+
+                course.edit_attendance_history(**mutation)
+                state['attendances'][state['user'].get_id()][index] = attended
+                test()
+
+            def routine():
+                test()
+                open()
+                login()
+                login()
+                close()
+                open()
+                close()
+                mutate(0, False)
+                mutate(0, False)
+                mutate(1, True)
+                mutate(1, True)
+                mutate(1, False)
+
+            def change_user(user):
+                if user.get_id() not in state['attendances']:
+                    state['attendances'][user.get_id()] = []
+                attendances = state['attendances'][user.get_id()]
+                # catch attendances up (assume we haven't signed in since we were last on this user)
+                for i in range(len(attendances), len(state['sessions'])):
+                    attendances.append(False)
+                state['user'] = user
+
+            course.add_student(student)
+            change_user(student)
+>           routine()
+
+test_design.py:459:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+test_design.py:436: in routine
+    open()
+test_design.py:399: in open
+    test()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def test():
+        attendances = state['attendances'][state['user'].get_id()]
+        expected = [
+            {
+                'user_id': state['user'].get_id(),
+                'session_id': state['sessions'][i],
+                'attended': attendances[i]
+            }
+            for i in range(len(state['sessions']))
+        ]
+
+        if len(attendances) > 0:
+            assert course.currently_signed_in(state['user']) == (
+                attendances[-1] and state['secret'] is not None), (
+                'course.currently_signed_in(student) incorrect')
+        else:
+            assert not course.currently_signed_in(state['user']), (
+                'course.current_signed_in(student) is True despite no open window')
+
+        details = course.get_attendance_details(state['user'])
+>       assert details == expected, 'Attendance details incorrect for iteration {}'.format(
+            len(state['sessions']) + 1)
+E       AssertionError: Attendance details incorrect for iteration 2
+E       assert [{'attended':...': 204L, ...}] == [{'attended': ...er_id': 198L}]
+E         At index 0 diff: {'closed_at': None, 'attended': False, 'opened_at': datetime.datetime(2017, 6, 27, 10, 0, 57, 492605, tzinfo=<UTC>), 'session_id': 204L, 'user_id': 198L} != {'attended': False, 'user_id': 198L, 'session_id': 204L}
+E         Use -v to get the full diff
+
+test_design.py:392: AssertionError
+====================== 1 failed, 6 passed in 5.44 seconds ======================
+[2017-06-27 10:00:58]
+(env) jonathan@jonathan-VirtualBox:~/placeholder_here$
+
+=================================================================================================
+-------------------------------------------------------------------------------------------------
+=================================================================================================
+
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:53 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:54 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:55 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:56 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:57 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:58 AM io.gapi.emulators.grpc.GrpcServer$3 operationComplete
+[datastore] INFO: Adding handler(s) to newly registered Channel.
+[datastore] Jun 27, 2017 10:00:58 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+[datastore] INFO: Detected HTTP/2 connection.
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerHandler onConnectionError
+[datastore] WARNING: Connection Error
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerTransport notifyTerminated
+[datastore] SEVERE: Transport failed
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerHandler onConnectionError
+[datastore] WARNING: Connection Error
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerTransport notifyTerminated
+[datastore] SEVERE: Transport failed
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerHandler onConnectionError
+[datastore] WARNING: Connection Error
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:00:58 AM io.grpc.netty.NettyServerTransport notifyTerminated
+[datastore] SEVERE: Transport failed
+[datastore] java.io.IOException: Connection reset by peer
+[datastore]     at sun.nio.ch.FileDispatcherImpl.read0(Native Method)
+[datastore]     at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39)
+[datastore]     at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223)
+[datastore]     at sun.nio.ch.IOUtil.read(IOUtil.java:192)
+[datastore]     at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:380)
+[datastore]     at io.netty.buffer.PooledUnsafeDirectByteBuf.setBytes(PooledUnsafeDirectByteBuf.java:288)
+[datastore]     at io.netty.buffer.AbstractByteBuf.writeBytes(AbstractByteBuf.java:1100)
+[datastore]     at io.netty.channel.socket.nio.NioSocketChannel.doReadBytes(NioSocketChannel.java:349)
+[datastore]     at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:112)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:571)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:512)
+[datastore]     at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:426)
+[datastore]     at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:398)
+[datastore]     at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:877)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+[datastore]     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+[datastore]     at java.lang.Thread.run(Thread.java:748)
+[datastore]
+[datastore] Jun 27, 2017 10:01:00 AM com.google.cloud.datastore.emulator.impl.LocalDatastoreFileStub$7 run
+[datastore] INFO: Time to persist datastore: 1 ms

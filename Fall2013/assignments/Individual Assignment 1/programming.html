@@ -1,0 +1,67 @@
+<h2>Project Description</h2>
+<p>You will write a web application exposing an interface that satisfies the Java Play routes file that can be downloaded <a href="routes">here</a>.
+The stock related questions you will need to answer are the following:</p>
+<ul>
+<li>What is the record high close for a stock given its ticker symbol?<ul>
+<li>Example Ticker: <code>NVDA</code></li>
+<li>Example Response: <code>172.94</code></li>
+<li>On an error return <code>0.00</code></li>
+</ul>
+</li>
+<li>What is the record low close for a stock given its ticker symbol?<ul>
+<li>Example Ticker: <code>NVDA</code></li>
+<li>Example Response: <code>5.90</code></li>
+<li>On an error return <code>0.00</code></li>
+</ul>
+</li>
+<li>What is the open price for a stock given a ticker symbol and a date?<ul>
+<li>Example Ticker: <code>NVDA</code></li>
+<li>Example Date: <code>2013-jul-15</code></li>
+<li>Example Response: <code>14.67</code></li>
+<li>On an error return <code>0.00</code></li>
+<li>If we request a data where the stock was not traded return the error value.</li>
+</ul>
+</li>
+<li>What is the close price for a stock given a ticker symbol and a date?<ul>
+<li>Example Ticker: <code>NVDA</code></li>
+<li>Example Date: <code>2013-jul-15</code> or <code>2013-07-15</code></li>
+<li>Example Response: <code>14.61</code></li>
+<li>On an error return <code>0.00</code></li>
+<li>If we request a data where the stock was not traded return the error value.</li>
+</ul>
+</li>
+</ul>
+<p>The logging related questions you will need to answer are the following:</p>
+<ul>
+<li>How many requests has the application received?</li>
+<li>What was the ticker symbol for the most recent request?</li>
+<li>What is the <em>Xth</em> ticker symbol requested where <em>X</em> can be replaced with any integer.
+If <em>X</em> is 2 then return the second ticker symbol requested.</li>
+<li>Of the stocks that have been queried, what is the highest close?</li>
+<li>Of the stocks that have been queried, what is the lowest close?</li>
+</ul>
+<p>This Yahoo finance HTTP API is very simple and shown below:</p>
+<ul>
+<li><code>http://ichart.yahoo.com/table.csv?s=&lt;tickerSymbol&gt;</code></li>
+<li>Example retrieving historical information about NVIDIA: <code>http://ichart.yahoo.com/table.csv?s=nvda</code></li>
+<li>We will be using only the historical quotes portion.
+We will not be using this specific wrapper because it is written in .Net but you can find a good summary of the API's URL structure <a href="http://code.google.com/p/yahoo-finance-managed/wiki/csvHistQuotesDownload">here</a>.</li>
+</ul>
+<h2>Other Requirements</h2>
+<ul>
+<li>For this assignment you are to use the <a href="http://www.playframework.com/">Java Play Framework</a>.</li>
+<li>You may not hard code <em>ANY</em> data or turn your project in with any data files.
+Your application must fetch all data from Yahoo.</li>
+<li>You may encode the structure of the data into your application but not the data itself.</li>
+<li>To test the project we will use the <code>play run</code> command so all set up must be encapsulated.</li>
+<li>For any invalid routes return the error value <code>0.00</code>.</li>
+</ul>
+<h2>Notes</h2>
+<ul>
+<li>A <a href="https://en.wikipedia.org/wiki/Ticker_symbol">ticker symbol</a> is a short code used to refer to a company traded on a stock exchange.
+As an example, NVIDIA's ticker symbol is <code>nvda</code> and Apple's ticker symbol.
+You do not need to handle ticker symbols containing non alphabetical characters such as periods.</li>
+<li>You will want to extensively test your assignment before submitting.
+We will be testing with both valid and invalid input.
+Java Play provides nice unit testing functionality.</li>
+</ul>

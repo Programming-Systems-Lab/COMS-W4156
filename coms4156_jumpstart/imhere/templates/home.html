@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>I'm Here</title>
+</head>
+
+<body>
+  {% if user: %}
+    <a href="/logout">Log out</a>
+  {% endif %}
+  {% include 'partials/messages.html' %}
+  <h1><center>I'm Here</center></h1><br>
+
+  {% if not user: %}
+    {% include 'partials/login_form.html' %}
+  {% else: %}
+    {% include 'partials/courses.html' %}
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,89 @@
+Messages
+========
+
+appengine_config.py
+  Line: 1
+    pylint: cyclic-import / Cyclic import (models.students_model -> models.tas_model)
+
+config.py
+  Line: 21
+    pylint: unused-import / Unused import os
+  Line: 24
+    dodgy: secret / Possible hardcoded secret key
+
+imhere/__init__.py
+  Line: 1
+    pyflakes: F401 / '.imhere.app' imported but unused (col 1)
+
+imhere/imhere.py
+  Line: 104
+    pylint: unused-argument / Unused argument 'endpoint' (col 19)
+  Line: 168
+    pylint: unused-argument / Unused argument 'e' (col 33)
+  Line: 188
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 195
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 201
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 241
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 258
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 267
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 297
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 307
+    pylint: unused-variable / Unused variable 'course' (col 4)
+  Line: 313
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 321
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 336
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 351
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 359
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 368
+    pylint: unused-argument / Unused argument 'kwargs'
+  Line: 396
+    pylint: no-else-return / Unnecessary "else" after "return" (col 4)
+
+models/courses_model.py
+  Line: 180
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 11)
+  Line: 202
+    pylint: unnecessary-pass / Unnecessary pass statement (col 16)
+  Line: 359
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 31)
+  Line: 375
+    pylint: bad-super-call / Bad first argument 'self.__class__' given to super() (col 8)
+
+models/students_model.py
+  Line: 10
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 26)
+  Line: 16
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 11)
+
+models/users_model.py
+  Line: 21
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 15)
+  Line: 30
+    pylint: len-as-condition / Do not use `len(SEQUENCE)` as condition value (col 15)
+
+
+
+Check Information
+=================
+         Started: 2017-06-29 22:46:05.016073
+        Finished: 2017-06-29 22:46:10.707469
+      Time Taken: 5.69 seconds
+       Formatter: grouped
+        Profiles: default, no_doc_warnings, no_test_warnings, strictness_medium, strictness_high, strictness_veryhigh, no_member_warnings
+      Strictness: None
+  Libraries Used: flask
+       Tools Run: dodgy, mccabe, pep8, profile-validator, pyflakes, pylint
+  Messages Found: 29
+

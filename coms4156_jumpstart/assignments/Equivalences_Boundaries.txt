@@ -1,0 +1,128 @@
+Equivalences and Boundaries
+
+- `User#sign_in`
+    - There is an equivalence class for all user data that matches an existing user
+    - There is an equivalence class for all user data that does not match any existing user
+    - All users fit into the same equivalence class, whether they're a Student, Teacher, or TA
+    - Boundary conditions are simply the following, because the data is not on a continuum:
+        - Valid user data    - Should succeed
+        - Invalid user data  - Should fail
+    - It's worth noting we realized we didn't need a `#sign_in` method, so we ended up with a combination of User's constructor and a `#get_or_create` method while creating the tests. The `#sign_in` was conceived from the outside without considering any real app constraints, so we forgot that the app uses OAuth2 which means we match against existing user data or create new user data based on that data. We felt a constructor and creator were more appropriate to represent model creation. The key parameter for the retrieval is `email`, which is a parameter to the constructor. For the constructor, the equivalence classes are just where the parameter is a valid email, and where the parameter is not a valid email. All other user data should act equivalently no matter how it's specified. We don't even assert their types. If the User already exists, that data gets ignored. If it does not, that data gets placed into a dict and pushed into the datastore regardless of what it is. This allows us to be flexible with what user inputs we take, and means that we need to do validation of user input on the routing end rather than the model end.
+
+- `Student#sign_into_session`
+    - There is an equivalence class for session_ids that don't correspond to actual sessions
+    - Of the session_ids that do correspond to actual sessions, there is an equivalence class for sessions that are open and one for sessions that are closed
+    - Whether the calling class is a Student or a TA does not change the equivalence class, as it utilizes the same code
+    - Boundary conditions are:
+        - session_id does not correspond to an actual session
+        - session is closed
+        - session is open
+    - In constructing the actual tests, we changed the API to `Student#sign_in(course)` that takes a course rather than a session. The equivalence classes and boundary conditions for this method is discussed later
+- `Course#get_attendance_records`
+    - To be honest, this isn't a particularly useful method. We're actually using it do greybox testing. It won't be used in any of the routes or by any of the other classes
+
+- `AttendanceWindow#did_student_attend(student_id)`
+    - There is an equivalence class for student_ids that don't correspond to actual students
+    - There is an equivalence class for student_ids that correspond to students who have signed in
+    - There is an equivalence class for student_ids that correspond to students who have not signed in
+    - Boundary conditions are:
+        - student_id doesn't correspond to an actual student
+        - student did attend
+        - student did not attend
+
+We ended up changing tons of stuff about our models when we thought about the needs more. The updated class diagram can be found here http://i.imgur.com/dxI6huc.png
+
+Here are the new methods that we aim to test:
+
+Note: All of these methods include an equivalence class where the model or a parameter is not saved in the database. Most setters will fail in this case, and many getters will fail. We're pretty comfortable in saying that unsaved models have undefined behavior in many cases, but we believe they will throw an exception or work as expected in all circumstances.
+
+- `User#is_teacher()`
+    - Equivalence classes for: teachers, non-teachers
+    - Boundary conditions just reflect the equivalence classes
+- `User#is_student()`
+    - Equivalence classes for: students, non-students
+    - Boundary conditions just reflect the equivalence classes
+- `User#get_or_create()`
+    - More of a constructor than anything. We're not planning on testing this directly. We're just going to use it to set up our tests
+
+- `Teacher#add_course(name)`
+    - Equivalence class for all names that are not empty
+    - Equivalence class for empty names (no name or '')
+    - Boundary conditions include name='' and name=' '
+- `Teacher#teaches_course(course)`
+    - Equivalence class for all courses the teacher teaches
+    - Equivalence class for all courses the teacher does not teach
+- `Teacher#get_courses()`
+    - No boundary conditions or equivalence class; all Teachers should behave the same way
+
+- `Student#register_as_student(uni)`
+    - Equivalence class for all unis that do not exist ('' or not specified)
+    - Equivalence class for all unis that exist but are not taken
+    - Equivalence class for all unis that exist but are taken
+    - Boundary conditions just reflect equivalence classes
+- `Student#sign_in(course, secret)`
+    - Just calls `course.sign_student_in(self, secret)`
+- `Student#is_signed_into(course)`
+    - Just calls `course.currently_signed_in(self)`
+- `Student#takes_course(course)`
+    - Equivalence class for all courses that student takes
+    - Equivalence class for all courses that student does not take
+    - If the user TAs or teaches the course, the equivalence class is ineffective
+ - `Student#get_courses()`
+    - All students are equivalent
+    - Boundary conditions: Student has no courses, student has one course
+
+- `TA#get_taed_courses()`
+    - All TAs are equivalent
+    - Boundary conditions: TA TAs no courses, TA TAs one course
+- `TA#tas_course(course)`
+    - Equivalence classes: whether the TA TAs the course or not
+
+- `Course#get_or_create()`
+    - Similar to User#get_or_create(). Ensures object corresponds to datastore.
+- `Course#has_student(student)`
+    - Equivalence class for all students taking the course
+    - Equivalence class for all students not taking the course
+- `Course#get_students()`
+    - All course are equivalent
+    - Boundary conditions: Course has no students, course has one student
+- `Course#add_student(student)`
+    - All unenrolled students are equivalent
+    - All enrolled students are equivalent
+- `Course#remove_student(student)`
+    - All unenrolled students are equivalent
+    - All enrolled students are equivalent
+- `Course#get_TAs()`
+    - All courses are equivalent
+    - Boundary conditions: Course has no TAs, course has one TA
+- `Course#has_TA(ta)`
+    - Equivalence class for all TAs TA'ing the course
+    - Equivalence class for all TAs not TA'ing the course
+- `Course#add_TA(ta)`
+    - All unhired TAs are equivalent
+    - All hired TAs are equivalent
+- `Course#remove_TA(ta)`
+    - All unhired TAs are equivalent
+    - All hired TAs are equivalent
+- `Course#get_open_session()`
+    - All courses with an open session window are equilavent
+    - All courses without an open session window are equilavent
+- `Course#open_session()`
+    - All courses with an open session window are equilavent
+    - All courses without an open session window are equilavent
+- `Course#close_session()`
+    - All courses with an open session window are equilavent
+    - All courses without an open session window are equilavent
+- `Course#session_count()`
+    - All course are equivalent
+    - Boundary conditions: zero sessions, one session
+- `Course#sign_student_in(student, secret)`
+    - All invalid secrets are an equivalence class, regardless of student.
+    - With a valid secret, Students not yet signed in are an equivalence class.
+    - With a valid secret, Students already signed in are an equivalence class.
+- `Course#currently_signed_in(student)`
+    - Students already signed in are an equilavence class.
+    - Students not yet signed in are an equilavence class.
+- `Course#get_attendance_records(student?, ta?)`
+- `Course#get_attendance_details(student)`
+- `Course#edit_attendance_history(student?, ta?, session_id?)

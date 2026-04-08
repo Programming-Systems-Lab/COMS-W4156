@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - ImHere</title>
+</head>
+<body>
+
+    <h1><center>Registration</center></h1>
+
+    <center>
+
+    <h2>Hi, {{name}}!</h2>
+
+    {% if not is_student or not is_teacher %}
+    <form method="POST" action="/register">
+      {% if not is_student and not is_teacher %}
+        <p>I am a</p>
+      {% elif is_student and not is_teacher %}
+        <font color="green">You are already registered as a student.</font><br>
+        <font color="red">You are not registered as a teacher.</font><br>
+        Register as a teacher below to gain access to both account types.<br><br>
+      {% elif not is_student and is_teacher %}
+        <font color="green">You are already registered as a teacher.</font><br>
+        <font color="red">You are not registered as a student.</font><br>
+        Register as a student below to gain access to both account types.<br><br>
+      {% endif %}
+
+      <label><input type="radio" name="type" value="student" checked="checked">Student</input></label></br>
+      <label><input type="radio" name="type" value="teacher">Teacher</input></label></br>
+
+      <label for="uni">My UNI is</label>
+      <input type="text" name="uni" id="uni" placeholder="uni"></input><br>
+      {% if invalid_uni %}
+        <font color="red">UNI already in use</font><br>
+      {% endif %}
+      <br>
+      <button type="submit">Register</button>
+    </form>
+
+    {% else %}
+    <form method="POST" action="/login">
+        <font color="green">You are already registered as a student AND as a teacher.</font><br>
+        Please hit continue below to advance to the teacher/student view.<br><br>
+        <button type="submit">Continue</button>
+    {% endif %}
+    </form>
+
+    </center>
+
+    <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+    <script>
+    $(document).ready(function(){
+        $('input[type="radio"]').on('change', function(){
+          if(this.value === 'teacher'){
+            $('label[for="uni"]').hide();
+            $('#uni').hide();
+          }
+          else{
+            $('label[for="uni"]').show();
+            $('#uni').show();
+          }
+        })
+    });
+
+    </script>
+
+</body>
+
+</html>
